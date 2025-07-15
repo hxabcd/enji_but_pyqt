@@ -1,11 +1,19 @@
 import os
 import random
 import re
+from dataclasses import dataclass, field
 from typing import List
 
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QPolygon
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 def init_scale():
@@ -30,12 +38,18 @@ def scaled_frame(frame: QPixmap):
     )
 
 
-class ImageWindow(QMainWindow):
+class Color:
+    TETO_RED = "#FF7C7F"
+    FG_COLOR = "#474747"
+    BG_COLOR = "#F2EFF2"
+
+
+class ContainerWindow(QMainWindow):
     def __init__(
         self,
+        widget: QWidget,
         position: tuple[int, int],
         size: tuple[int, int],
-        res_name: str,
         title: str | None = None,
     ):
         super().__init__()
@@ -43,18 +57,23 @@ class ImageWindow(QMainWindow):
         self.resize(*scaled(size))
         if title:
             self.setWindowTitle(title)
+        self.widget = widget
 
         # 初始化窗口
-        widget = QWidget()
-        widget.setStyleSheet("background-color: #F2EFF2;")
-        self.setCentralWidget(widget)
-        layout = QVBoxLayout(widget)
+        placeholder = QWidget()
+        placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR};")
+        self.setCentralWidget(placeholder)
+        layout = QVBoxLayout(placeholder)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.widget, stretch=1)
 
-        self.image = QLabel()
-        self.image.setStyleSheet("background-color: #F2EFF2;")
-        self.image.setScaledContents(True)
-        layout.addWidget(self.image)
+
+class SequenceFrame(QLabel):
+    def __init__(self, res_name: str):
+        super().__init__()
+
+        self.setStyleSheet(f"background-color: {Color.BG_COLOR};")
+        self.setScaledContents(True)
 
         # 初始化序列帧
         self.frames: List[QPixmap] = []
@@ -72,7 +91,7 @@ class ImageWindow(QMainWindow):
             self.frames.append(pixmap)
         if not self.frames:
             raise ValueError(f"No frames found in {res_name}")
-        self.image.setPixmap(scaled_frame(self.frames[0]))
+        self.setPixmap(scaled_frame(self.frames[0]))
 
     def start_loop(self, duration: int):
         """循环播放帧"""
@@ -94,10 +113,10 @@ class ImageWindow(QMainWindow):
         """播放帧, 可向前/向后, index 为空时切换下一帧"""
         if index is None:
             self.index = (self.index + 1) % len(self.frames)
-            self.image.setPixmap(scaled_frame(self.frames[self.index]))
+            self.setPixmap(scaled_frame(self.frames[self.index]))
         elif abs(index) < len(self.frames):
             self.index = index if index > 0 else len(self.frames) + index
-            self.image.setPixmap(scaled_frame(self.frames[self.index]))
+            self.setPixmap(scaled_frame(self.frames[self.index]))
         else:
             raise IndexError("Index out of range for frames.")
 
@@ -108,43 +127,47 @@ class DecorationShape:
     TRIANGLE = "triangle"
 
 
+@dataclass
 class Decoration:
-    def __init__(
-        self,
-        position: QPoint,
-        shape: str = DecorationShape.CIRCLE,
-        color: QColor = QColor("red"),
-        size: int = 12,
-        fill: bool = False,
-        rotation: float = 0.0,
-    ):
-        self.position = position
-        self.shape = shape
-        self.color = color
-        self.size = size
-        self.fill = fill
-        self.rotation = rotation
+    position: QPoint
+    shape: str = DecorationShape.TRIANGLE
+    color: QColor = field(default_factory=lambda: QColor(Color.TETO_RED))
+    size: int = 12
+    fill: bool = True
+    rotation: float = 0.0
 
 
-class JitterLabelWidget(QWidget):
+class DecoratedLabel(QWidget):
     def __init__(
         self,
-        text: str,
+        text: str = "",
         text_size=18,
         text_font=QFont(),
-        text_color: QColor | None = None,
-        background_color: QColor = QColor("white"),
+        text_color: QColor = QColor(Color.FG_COLOR),
+        pixmap: QPixmap | None = None,
         decorations: List[Decoration] | None = None,
+        background_color: QColor = QColor(Color.BG_COLOR),
+        jitter_frequency: int = 1000,
+        jitter_offset: int = 8,
         parent=None,
     ):
         super().__init__(parent)
 
-        self.label = QLabel(text)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.label = QLabel()
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.label.setStyleSheet("background-color: transparent;")
 
-        text_font.setPointSize(text_size)
-        self.label.setFont(text_font)
+        if pixmap is not None:
+            self.label.setPixmap(pixmap)
+        else:
+            self.label.setText(text)
+            text_font.setPointSize(text_size)
+            self.label.setFont(text_font)
+            if text_color:
+                self.label.setStyleSheet(f"color: {text_color.name()};")
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
@@ -157,7 +180,9 @@ class JitterLabelWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_jitter)
         if self.decorations:
-            self.timer.start(333)
+            self.timer.start(jitter_frequency)
+
+        self.jitter_offset = jitter_offset
 
         self.setMinimumSize(100, 50)
 
@@ -166,15 +191,18 @@ class JitterLabelWidget(QWidget):
         palette.setColor(self.backgroundRole(), background_color)
         self.setPalette(palette)
 
-        if text_color:
-            self.label.setStyleSheet(f"color: {text_color.name()};")
-
     def set_text(self, text: str):
         self.label.setText(text)
 
+    def set_pixmap(self, pixmap: QPixmap):
+        self.label.setPixmap(pixmap)
+
     def update_jitter(self):
         self.jitter_offsets = [
-            QPoint(random.randint(-8, 8), random.randint(-8, 8))
+            QPoint(
+                random.randint(-self.jitter_offset, self.jitter_offset),
+                random.randint(-self.jitter_offset, self.jitter_offset),
+            )
             for _ in self.decorations
         ]
         self.update()
@@ -209,30 +237,3 @@ class JitterLabelWidget(QWidget):
                 painter.drawPolygon(points)
 
             painter.restore()
-
-
-class JitterLabelWindow(QMainWindow):
-    def __init__(
-        self,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        title: str | None = None,
-        *args,
-        **kwargs,
-    ):
-        super().__init__()
-        self.move(*scaled(position))
-        self.resize(*scaled(size))
-        if title:
-            self.setWindowTitle(title)
-
-        # 初始化窗口
-        widget = JitterLabelWidget(*args, **kwargs)
-        self.setCentralWidget(widget)
-        layout = QVBoxLayout(widget)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.image = QLabel()
-        self.image.setStyleSheet("background-color: #F2EFF2;")
-        self.image.setScaledContents(True)
-        layout.addWidget(self.image)
