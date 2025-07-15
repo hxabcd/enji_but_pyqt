@@ -52,6 +52,14 @@ class ContainerWindow(QMainWindow):
         size: tuple[int, int],
         title: str | None = None,
     ):
+        """基本容器窗口
+
+        Args:
+            widget (QWidget): 中心组件
+            position (tuple[int, int]): 窗口位置
+            size (tuple[int, int]): 窗口大小
+            title (str | None, optional): 窗口标题
+        """
         super().__init__()
         self.move(*scaled(position))
         self.resize(*scaled(size))
@@ -70,6 +78,11 @@ class ContainerWindow(QMainWindow):
 
 class SequenceFrame(QLabel):
     def __init__(self, res_name: str):
+        """序列帧组件
+
+        Args:
+            res_name (str): 序列帧资源目录，帧文件名应是数字
+        """
         super().__init__()
 
         self.setStyleSheet(f"background-color: {Color.BG_COLOR};")
@@ -110,7 +123,7 @@ class SequenceFrame(QLabel):
             self.timer.stop()
 
     def play_frame(self, index: int | None = None):
-        """播放帧, 可向前/向后, index 为空时切换下一帧"""
+        """播放帧，可向前/向后，index 为空时切换下一帧"""
         if index is None:
             self.index = (self.index + 1) % len(self.frames)
             self.setPixmap(scaled_frame(self.frames[self.index]))
@@ -129,6 +142,8 @@ class DecorationShape:
 
 @dataclass
 class Decoration:
+    """装饰元素类，适用于DecoratedLabel，可用的形状见DecorationShape"""
+
     position: QPoint
     shape: str = DecorationShape.TRIANGLE
     color: QColor = field(default_factory=lambda: QColor(Color.TETO_RED))
@@ -149,12 +164,25 @@ class DecoratedLabel(QWidget):
         background_color: QColor = QColor(Color.BG_COLOR),
         jitter_frequency: int = 1000,
         jitter_offset: int = 8,
-        parent=None,
     ):
-        super().__init__(parent)
+        """带有装饰几何图形的标签，几何图形可随机抖动
+
+        Args:
+            text (str, optional): 文本
+            text_size (int, optional): 字号
+            text_font (_type_, optional): 字体
+            text_color (QColor, optional): 文本颜色
+            pixmap (QPixmap | None, optional): 图像帧（QPixmap）
+            decorations (List[Decoration] | None, optional): 装饰元素
+            background_color (QColor, optional): 背景颜色
+            jitter_frequency (int, optional): 抖动频率（ms）
+            jitter_offset (int, optional): 抖动幅度
+        """
+        super().__init__()
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        # 初始化标签
         self.label = QLabel()
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -174,6 +202,7 @@ class DecoratedLabel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignCenter)
 
+        # 初始化装饰与抖动
         self.decorations = decorations or []
         self.jitter_offsets = [QPoint(0, 0) for _ in self.decorations]
 
@@ -184,20 +213,14 @@ class DecoratedLabel(QWidget):
 
         self.jitter_offset = jitter_offset
 
-        self.setMinimumSize(100, 50)
-
+        # 初始化背景
         self.setAutoFillBackground(True)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), background_color)
         self.setPalette(palette)
 
-    def set_text(self, text: str):
-        self.label.setText(text)
-
-    def set_pixmap(self, pixmap: QPixmap):
-        self.label.setPixmap(pixmap)
-
     def update_jitter(self):
+        """更新抖动"""
         self.jitter_offsets = [
             QPoint(
                 random.randint(-self.jitter_offset, self.jitter_offset),
@@ -208,6 +231,7 @@ class DecoratedLabel(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """绘制事件，这玩意AI写的，我也看不懂……"""
         super().paintEvent(event)
         if not self.decorations:
             return
