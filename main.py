@@ -25,9 +25,6 @@ class Animation(QApplication):
         self.font_family = QFontDatabase.applicationFontFamilies(self.font_id)[0]
         self.setFont(QFont(self.font_family))
 
-        self.font_bold = QFont(self.font_family)
-        self.font_bold.setBold(True)
-
         # 初始化音乐
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -39,21 +36,21 @@ class Animation(QApplication):
         # 初始化窗口
         self.window_yan = ContainerWindow(
             SequenceFrame("frames/yan"),
-            position=(230, 342),
+            position=("gapL180", "mid"),
             size=(450, 450),
             title="胭",
         )
 
         self.window_zhi = ContainerWindow(
             SequenceFrame("frames/zhi"),
-            position=(1280, 342),
+            position=("gapR180", "mid"),
             size=(450, 450),
             title="脂",
         )
 
         self.window_small_teto1 = ContainerWindow(
             SequenceFrame("frames/small_teto1"),
-            position=(660, 246),
+            position=("mid", "mid"),
             size=(620, 600),
             title="神秘红色钻头",
         )
@@ -83,19 +80,19 @@ class Animation(QApplication):
                 jitter_frequency=333,
                 jitter_offset=8,
             ),
-            position=(729, 445),
+            position=("mid", "mid"),
             size=(460, 200),
             title="Starring",
         )
 
         self.window_small_teto2 = ContainerWindow(
             SequenceFrame("frames/small_teto2"),
-            position=(660, 246),
+            position=("mid", "mid"),
             size=(620, 600),
             title="神秘白色钻头",
         )
 
-        self.window_text1 = ContainerWindow(
+        self.text_left = ContainerWindow(
             DecoratedLabel(
                 text_size=200,
                 text_align=Qt.AlignmentFlag.AlignRight,
@@ -113,16 +110,168 @@ class Animation(QApplication):
                     ),
                 ],
             ),
-            position=(147, 60),
+            position=("gapL80", "mid"),
             size=(890, 960),
             shake=True,
         )
 
-        self.window_text2 = ContainerWindow(
+        self.text_right = ContainerWindow(
             DecoratedLabel(
-                text_size=160,
+                text_size=200,
                 text_align=Qt.AlignmentFlag.AlignRight,
                 decorations=[
+                    Decoration(
+                        position=QPoint(240, 480),
+                        shape=DecorationShape.CIRCLE,
+                        size=400,
+                    ),
+                    Decoration(
+                        position=QPoint(240, 480),
+                        shape=DecorationShape.CIRCLE,
+                        color=Color.BG_COLOR,
+                        size=200,
+                    ),
+                ],
+            ),
+            position=("gapR80", "mid"),
+            size=(920, 780),
+            shake=True,
+        )
+
+        # ウェルカムつマイマイ　ようこそ　エントリしました　それでは行きましょう　ゲームスタートです
+        afont = QFont("Arial")
+        self.window_emoji = ContainerWindow(
+            DecoratedLabel(
+                text_font=afont,
+                text_size=200,
+                is_bold=True,
+                letter_spacing="0",
+                text_color=Color.TETO_RED,
+                text_align=Qt.AlignmentFlag.AlignCenter,
+            ),
+            position=("mid", "mid"),
+            size=(1280, 840),
+            title="神秘字符钻头",
+            shake=False,
+        )
+
+        self.text_leftline = ContainerWindow(
+            DecoratedLabel(
+                text_size=90,
+                text_align=Qt.AlignmentFlag.AlignLeft,
+                decorations=[
+                    Decoration(
+                        position=QPoint(330, 80),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                    ),
+                ],
+            ),
+            position=(96, "mid"),
+            size=(540, 160),
+            shake=True,
+        )
+
+        self.text_rightline = ContainerWindow(
+            DecoratedLabel(
+                text_size=90,
+                text_align=Qt.AlignmentFlag.AlignRight,
+                decorations=[
+                    Decoration(
+                        position=QPoint(330, 80),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                    ),
+                ],
+            ),
+            position=(1920 - 540 - 96, 420),
+            size=(540, 160),
+            shake=True,
+        )
+
+        self.text_centerline = ContainerWindow(
+            DecoratedLabel(
+                text_size=100,
+                text_align=Qt.AlignmentFlag.AlignCenter,
+                decorations=[],
+            ),
+            position=((1920 - 800) // 2, 430),
+            size=(800, 180),
+            shake=True,
+        )
+
+
+def main():
+    app = Animation()
+
+    app.player.play()
+
+    # DEBUG OPTION
+    start_from = 0
+    stop_at = 0
+
+    # 动画序列
+    def sequence_update(pos):
+        nonlocal start_from
+        if start_from and pos < start_from:
+            app.player.setPosition(start_from)
+            return
+        if stop_at and pos > stop_at:
+            app.player.stop()
+            return
+        if pos < 9160:
+            app.window_yan.show()
+            app.window_zhi.show()
+            app.window_small_teto1.show()
+            app.window_yan.widget.start_loop(3)
+            app.window_zhi.widget.start_loop(3)
+            app.window_small_teto1.widget.start_loop(3)
+        elif 9160 <= pos < 11791:
+            app.window_yan.hide()
+            app.window_zhi.hide()
+            app.window_small_teto1.hide()
+            app.window_starring.show()
+        elif 11791 <= pos < 14260:
+            app.window_starring.hide()
+            app.window_yan.show()
+            app.window_zhi.show()
+            app.window_small_teto2.show()
+            app.window_small_teto2.widget.start_loop(3)
+        elif 14260 <= pos < 14727:
+            app.window_yan.hide()
+            app.window_zhi.hide()
+            app.window_small_teto2.hide()
+            app.window_emoji.widget.label.setText("▼(-_-)▼")
+            app.window_emoji.show()
+        elif 14272 <= pos < 20459:
+            app.window_emoji.hide()
+            app.window_yan.show()
+            app.window_zhi.show()
+            app.window_small_teto2.show()
+
+        elif 20459 <= pos < 23000:
+            app.window_yan.hide()
+            app.window_zhi.hide()
+            app.window_small_teto2.widget.start_loop(1)
+        elif 23000 <= pos < 24116:  # え？うそ
+            app.window_small_teto2.hide()
+            app.text_left.widget.label.setText(
+                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>　　"
+            )
+            app.text_left.show()
+        elif 24116 <= pos < 25360:
+            app.text_left.widget.label.setText(
+                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>うそ"
+            )
+        elif 25360 <= pos < 25560:
+            app.text_left.widget.label.setText("")
+            app.text_left.widget.set_decorations([])
+        elif 25560 <= pos < 26000:  # 私 天才じゃないの？
+            app.text_left.widget.label.setText(
+                "<span style='font-size:240px;'>私</span> ——<br><br>"
+            )
+            app.text_left.widget.set_decorations(
+                [
                     Decoration(
                         position=QPoint(300, 240),
                         shape=DecorationShape.RECTANGLE,
@@ -136,67 +285,104 @@ class Animation(QApplication):
                         size=80,
                         rotation=45,
                     ),
-                ],
-            ),
-            position=(147, 60),
-            size=(890, 960),
-            shake=True,
-        )
-
-
-def main():
-    app = Animation()
-
-    app.player.play()
-
-    # 动画序列
-
-    def sequence_update(pos):
-        if pos < 9160:
-            app.player.setPosition(23000)
-            return
-            app.window_small_teto1.show()
-            app.window_yan.show()
-            app.window_zhi.show()
-            app.window_small_teto1.widget.start_loop(3)
-            app.window_yan.widget.start_loop(3)
-            app.window_zhi.widget.start_loop(3)
-        elif pos < 11791:
-            app.window_small_teto1.hide()
-            app.window_yan.hide()
-            app.window_zhi.hide()
-            app.window_starring.show()
-        elif pos < 20459:
-            app.window_starring.hide()
-            app.window_small_teto2.show()
-            app.window_small_teto2.widget.start_loop(3)
-            app.window_yan.show()
-            app.window_zhi.show()
-        elif pos < 23000:
-            app.window_yan.hide()
-            app.window_zhi.hide()
-            app.window_small_teto2.widget.start_loop(1)
-        elif pos < 24116:
-            app.window_small_teto2.hide()
-            app.window_text1.setLabelText(
-                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>　　"
+                ]
             )
-            app.window_text1.show()
-            app.window_text1.start_shake()
-        elif pos < 25360:
-            app.window_text1.setLabelText(
-                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>うそ"
+            app.text_left.widget.set_font_size(150)
+            app.text_left.show()
+        elif 26000 <= pos < 26700:
+            app.text_left.widget.label.setText(
+                "<span style='font-size:240px;'>私</span> 天才<br>————<br>————"
             )
-        elif pos < 25560:
-            app.window_text1.stop_shake()
-            app.window_text1.hide()
-        elif pos < 26000:
-            app.window_text2.show()
-            app.window_text2.setLabelText("私 　　\n　　　　\n　　　　")
-        elif pos < 26700:
-            app.window_text2.setLabelText("私 天才\n　　　　\n　　　　")
-        elif pos < 28650:
-            app.window_text2.setLabelText("私 天才\nじゃない\n　の？　")
+        elif 26700 <= pos < 28650:
+            app.text_left.widget.label.setText(
+                "<span style='font-size:240px;'>私</span> 天才<br>じゃない<br>—の？—"
+            )
+        elif 28650 <= pos < 28927:
+            app.text_left.hide()
+        elif 28927 <= pos < 29327:  # なぜ なぜ　占い効かない
+            app.text_right.widget.label.setText(
+                "<span style='font-size:240px;'>な</span>ぜ<br><span style='font-size:240px;'>—</span>—"
+            )
+            app.text_right.widget.set_font_size(160)
+            app.text_right.widget.set_alignment(Qt.AlignmentFlag.AlignCenter)
+            app.text_right.show()
+        elif 29327 <= pos < 30300:
+            app.text_right.widget.label.setText(
+                "<span style='font-size:240px;'>な</span>ぜ<br><span style='font-size:240px;'>な</span>ぜ"
+            )
+        elif 30300 <= pos < 30460:
+            app.text_left.widget.label.setText("")
+            app.text_left.widget.set_decorations([])
+        elif 30460 <= pos < 31126:
+            app.text_right.widget.label.setText(
+                "<span style='font-size:240px;'>占</span>い<br>"
+            )
+        elif 31126 <= pos < 32692:
+            app.text_right.widget.label.setText(
+                "<span style='font-size:240px;'>占</span>い<br><span style='font-size:240px;'>効</span>かない"
+            )
+        elif 32692 <= pos < 34000:
+            app.text_right.hide()
+        elif 34000 <= pos < 34191:  # た た た
+            ...
+        elif 34191 <= pos < 34360:
+            ...
+        elif 34360 <= pos < 34558:
+            ...
+        elif 34558 <= pos < 36093:  # 大変な奴 ベラベラ 何言ってんの？
+            app.text_leftline.widget.label.setText("大変な奴")
+            app.text_leftline.show()
+        elif 36093 <= pos < 36993:
+            app.text_rightline.widget.label.setText("べうべう")
+            app.text_rightline.show()
+        elif 36993 <= pos < 39730:
+            app.text_leftline.hide()
+            app.text_rightline.hide()
+            app.text_centerline.widget.label.setText("何言ってんの？")
+            app.text_centerline.show()
+        elif 39730 <= pos < 41063:  # どうでもいいよ、普通の僕に関係ないでしょ？
+            app.text_centerline.hide()
+            app.text_leftline.widget.label.setText("どうでもいいよ")
+            app.text_leftline.show()
+        elif 41063 <= pos < 42531:
+            app.text_rightline.widget.label.setText("普通の僕に")
+            app.text_rightline.show()
+        elif 42531 <= pos < 44499:
+            app.text_leftline.hide()
+            app.text_rightline.hide()
+            app.text_centerline.widget.label.setText("関係ないでしょ？")
+            app.text_centerline.show()
+        # 这里理应有个teto的入场动画
+        elif 45898 <= pos < 46366:  # おい！そこの人間！
+            app.text_centerline.hide()
+            app.text_left.widget.set_font_size(120)
+            app.text_left.widget.label.setText("おい！<br>")
+            app.text_left.show()
+        elif 46366 <= pos < 48399:
+            app.text_left.widget.label.setText("おい！<br>そこの人間！<br>")
+        elif 48399 <= pos < 48766:
+            app.text_left.hide()
+        elif 48766 <= pos < 49233:  # 武器、持ってる？
+            app.text_left.widget.label.setText("武器、<br>")
+        elif 49233 <= pos < 51300:
+            app.text_left.widget.label.setText("武器、<br>持ってる？<br>")
+        # teto出场动画
+        elif 51300 <= pos < 51632:
+            app.text_left.hide()
+        elif 51632 <= pos < 52698:  # 聞こえたか？聞こえたか？ 肖像 喋った
+            app.text_left.widget.label.setText("聞こえたか？<br>")
+            app.text_left.show()
+        elif 52698 <= pos < 53565:
+            app.text_left.widget.label.setText("聞こえたか？<br>聞こえたか？<br>")
+        elif 53565 <= pos < 56365:
+            app.text_left.widget.label.setText(
+                "聞こえたか？<br>聞こえたか？<br>肖像 喋った"
+            )
+        elif 56365 <= pos < 56933:
+            app.text_left.hide()
+        elif 56933 <= pos < 57265:
+            app.text_left.widget.label.setText("だって")
+            app.text_left.show()
 
     app.player.positionChanged.connect(sequence_update)
 
