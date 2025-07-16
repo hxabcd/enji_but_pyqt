@@ -38,10 +38,14 @@ def scaled_frame(frame: QPixmap):
     )
 
 
+def rewarp(text: str, symbol="\n", placeholder="​"):
+    return text.replace(symbol, placeholder + symbol) + placeholder
+
+
 class Color:
-    TETO_RED = "#FF7C7F"
-    FG_COLOR = "#474747"
-    BG_COLOR = "#F2EFF2"
+    TETO_RED = QColor("#FF7C7F")
+    FG_COLOR = QColor("#474747")
+    BG_COLOR = QColor("#F2EFF2")
 
 
 class ContainerWindow(QMainWindow):
@@ -51,6 +55,7 @@ class ContainerWindow(QMainWindow):
         position: tuple[int, int],
         size: tuple[int, int],
         title: str | None = None,
+        shake: bool = False,
     ):
         """基本容器窗口
 
@@ -69,11 +74,48 @@ class ContainerWindow(QMainWindow):
 
         # 初始化窗口
         placeholder = QWidget()
-        placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR};")
+        placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
         self.setCentralWidget(placeholder)
         layout = QVBoxLayout(placeholder)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.widget, stretch=1)
+
+        self._current_offset = 1
+        self._current_interval = 33
+
+        if shake:
+            self.start_shake()
+
+    def setLabelText(self, text: str):
+        if isinstance(self.widget, DecoratedLabel):
+            if self.widget.label.text() != text:
+                self.widget.label.setText(rewarp(text))
+
+    def start_shake(self, offset=1, interval=33):
+        if not hasattr(self, "timer"):
+            self._original_pos = self.pos()
+            self._shake_timer = QTimer(self)
+        if (self._shake_timer.isActive and offset != self._current_offset) or (
+            self._shake_timer.isActive and interval != self._current_interval
+        ):
+            self._shake_timer.stop()
+
+        if not self._shake_timer.isActive():
+
+            def _do_shake():
+                dx = random.randint(-offset, offset)
+                dy = random.randint(-offset, offset)
+                self.move(self._original_pos + QPoint(dx, dy))
+
+            self._current_offset = offset
+            self._current_interval = interval
+
+            self._shake_timer.timeout.connect(_do_shake)
+            self._shake_timer.start(interval)
+
+    def stop_shake(self):
+        if hasattr(self, "_shake_timer") and self._shake_timer.isActive():
+            self._shake_timer.stop()
 
 
 class SequenceFrame(QLabel):
@@ -85,7 +127,7 @@ class SequenceFrame(QLabel):
         """
         super().__init__()
 
-        self.setStyleSheet(f"background-color: {Color.BG_COLOR};")
+        self.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
         self.setScaledContents(True)
 
         # 初始化序列帧
@@ -146,8 +188,9 @@ class Decoration:
 
     position: QPoint
     shape: str = DecorationShape.TRIANGLE
-    color: QColor = field(default_factory=lambda: QColor(Color.TETO_RED))
+    color: QColor = field(default_factory=lambda: Color.TETO_RED)
     size: int = 12
+    width: int = 2
     fill: bool = True
     rotation: float = 0.0
 
@@ -156,24 +199,26 @@ class DecoratedLabel(QWidget):
     def __init__(
         self,
         text: str = "",
-        text_size=18,
-        text_font=QFont(),
-        text_color: QColor = QColor(Color.FG_COLOR),
+        text_size: int = 18,
+        text_font: QFont = QFont(),
+        text_color: QColor = Color.FG_COLOR,
+        text_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignCenter,
         pixmap: QPixmap | None = None,
         decorations: List[Decoration] | None = None,
-        background_color: QColor = QColor(Color.BG_COLOR),
+        background_color: QColor = Color.BG_COLOR,
         jitter_frequency: int = 1000,
-        jitter_offset: int = 8,
+        jitter_offset: int = 0,
     ):
         """带有装饰几何图形的标签，几何图形可随机抖动
 
         Args:
             text (str, optional): 文本
             text_size (int, optional): 字号
-            text_font (_type_, optional): 字体
+            text_font (QFont, optional): 字体
             text_color (QColor, optional): 文本颜色
-            pixmap (QPixmap | None, optional): 图像帧（QPixmap）
-            decorations (List[Decoration] | None, optional): 装饰元素
+            text_align (Qt.AlignmentFlag): 对齐方式
+            pixmap (QPixmap, optional): 图像（QPixmap）
+            decorations (List[Decoration], optional): 装饰元素
             background_color (QColor, optional): 背景颜色
             jitter_frequency (int, optional): 抖动频率（ms）
             jitter_offset (int, optional): 抖动幅度
@@ -184,9 +229,15 @@ class DecoratedLabel(QWidget):
 
         # 初始化标签
         self.label = QLabel()
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(text_align)
         self.label.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.label.setStyleSheet("background-color: transparent;")
+        self.label.setStyleSheet(f"""
+            color: {text_color.name()};
+            background-color: transparent;
+            letter-spacing: -28px;
+            white-space: pre;
+            text-align: right;
+            """)
 
         if pixmap is not None:
             self.label.setPixmap(pixmap)
@@ -194,8 +245,6 @@ class DecoratedLabel(QWidget):
             self.label.setText(text)
             text_font.setPointSize(text_size)
             self.label.setFont(text_font)
-            if text_color:
-                self.label.setStyleSheet(f"color: {text_color.name()};")
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
@@ -247,7 +296,7 @@ class DecoratedLabel(QWidget):
                 painter.rotate(deco.rotation)
 
             pen = QPen(deco.color)
-            pen.setWidth(2)
+            pen.setWidth(deco.width)
             painter.setPen(pen)
             painter.setBrush(QBrush(deco.color) if deco.fill else Qt.NoBrush)
 

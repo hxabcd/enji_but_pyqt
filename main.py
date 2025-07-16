@@ -1,14 +1,14 @@
-import sys
-
-from PySide6.QtCore import QPoint, QUrl
+from PySide6.QtCore import QPoint, Qt, QUrl
 from PySide6.QtGui import QFont, QFontDatabase, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import QApplication
 
 from components import (
+    Color,
     ContainerWindow,
     DecoratedLabel,
     Decoration,
+    DecorationShape,
     SequenceFrame,
     init_scale,
 )
@@ -81,6 +81,7 @@ class Animation(QApplication):
                     ),
                 ],
                 jitter_frequency=333,
+                jitter_offset=8,
             ),
             position=(729, 445),
             size=(460, 200),
@@ -94,6 +95,54 @@ class Animation(QApplication):
             title="神秘白色钻头",
         )
 
+        self.window_text1 = ContainerWindow(
+            DecoratedLabel(
+                text_size=200,
+                text_align=Qt.AlignmentFlag.AlignRight,
+                decorations=[
+                    Decoration(
+                        position=QPoint(240, 480),
+                        shape=DecorationShape.CIRCLE,
+                        size=400,
+                    ),
+                    Decoration(
+                        position=QPoint(240, 480),
+                        shape=DecorationShape.CIRCLE,
+                        color=Color.BG_COLOR,
+                        size=200,
+                    ),
+                ],
+            ),
+            position=(147, 60),
+            size=(890, 960),
+            shake=True,
+        )
+
+        self.window_text2 = ContainerWindow(
+            DecoratedLabel(
+                text_size=160,
+                text_align=Qt.AlignmentFlag.AlignRight,
+                decorations=[
+                    Decoration(
+                        position=QPoint(300, 240),
+                        shape=DecorationShape.RECTANGLE,
+                        size=160,
+                        rotation=45,
+                    ),
+                    Decoration(
+                        position=QPoint(300, 240),
+                        shape=DecorationShape.RECTANGLE,
+                        color=Color.BG_COLOR,
+                        size=80,
+                        rotation=45,
+                    ),
+                ],
+            ),
+            position=(147, 60),
+            size=(890, 960),
+            shake=True,
+        )
+
 
 def main():
     app = Animation()
@@ -102,32 +151,52 @@ def main():
 
     # 动画序列
 
-    def sequence_update(position):
-        if 0 <= position < 9160:
+    def sequence_update(pos):
+        if pos < 9160:
+            app.player.setPosition(23000)
+            return
             app.window_small_teto1.show()
             app.window_yan.show()
             app.window_zhi.show()
             app.window_small_teto1.widget.start_loop(3)
             app.window_yan.widget.start_loop(3)
             app.window_zhi.widget.start_loop(3)
-        elif 9160 <= position < 11791:
+        elif pos < 11791:
             app.window_small_teto1.hide()
             app.window_yan.hide()
             app.window_zhi.hide()
             app.window_starring.show()
-        elif 11791 <= position < 20459:
+        elif pos < 20459:
             app.window_starring.hide()
             app.window_small_teto2.show()
             app.window_small_teto2.widget.start_loop(3)
             app.window_yan.show()
             app.window_zhi.show()
-        elif 20459 <= position < 23000:
+        elif pos < 23000:
             app.window_yan.hide()
             app.window_zhi.hide()
             app.window_small_teto2.widget.start_loop(1)
-        elif 23000 <= position:
+        elif pos < 24116:
             app.window_small_teto2.hide()
-            sys.exit()
+            app.window_text1.setLabelText(
+                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>　　"
+            )
+            app.window_text1.show()
+            app.window_text1.start_shake()
+        elif pos < 25360:
+            app.window_text1.setLabelText(
+                "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>うそ"
+            )
+        elif pos < 25560:
+            app.window_text1.stop_shake()
+            app.window_text1.hide()
+        elif pos < 26000:
+            app.window_text2.show()
+            app.window_text2.setLabelText("私 　　\n　　　　\n　　　　")
+        elif pos < 26700:
+            app.window_text2.setLabelText("私 天才\n　　　　\n　　　　")
+        elif pos < 28650:
+            app.window_text2.setLabelText("私 天才\nじゃない\n　の？　")
 
     app.player.positionChanged.connect(sequence_update)
 

@@ -9,5 +9,5 @@ wheels/
 # Virtual environments
 .venv
 
-test.py
+test*.py
 lyric.txt
