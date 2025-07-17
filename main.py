@@ -1,5 +1,7 @@
+from typing import List
+
 from PySide6.QtCore import QPoint, Qt, QUrl
-from PySide6.QtGui import QFont, QFontDatabase, QPixmap
+from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics, QIcon, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import QApplication
 
@@ -18,12 +20,18 @@ class Animation(QApplication):
     def __init__(self):
         super().__init__()
         self.setApplicationName("胭脂")
+        self.setWindowIcon(QIcon("resources/teto.ico"))
         init_scale()
 
         # 初始化字体
-        self.font_id = QFontDatabase.addApplicationFont("resources/mogihaPen.ttf")
-        self.font_family = QFontDatabase.applicationFontFamilies(self.font_id)[0]
-        self.setFont(QFont(self.font_family))
+        self.font_id1 = QFontDatabase.addApplicationFont("resources/mogihaPen.ttf")
+        self.font_family1 = QFontDatabase.applicationFontFamilies(self.font_id1)[0]
+        self.font1 = QFont(self.font_family1)
+        self.setFont(self.font1)
+
+        self.font_id2 = QFontDatabase.addApplicationFont("resources/AkazukiPOP.otf")
+        self.font_family2 = QFontDatabase.applicationFontFamilies(self.font_id2)[0]
+        self.font2 = QFont(self.font_family2)
 
         # 初始化音乐
         self.player = QMediaPlayer()
@@ -167,7 +175,7 @@ class Animation(QApplication):
                     ),
                 ],
             ),
-            position=(96, "mid"),
+            position=("gapL96", "mid"),
             size=(540, 160),
             shake=True,
         )
@@ -184,7 +192,7 @@ class Animation(QApplication):
                     ),
                 ],
             ),
-            position=(1920 - 540 - 96, 420),
+            position=("gapR96", "mid"),
             size=(540, 160),
             shake=True,
         )
@@ -200,6 +208,25 @@ class Animation(QApplication):
             shake=True,
         )
 
+        window_ta_color = [Color.TETO_RED, Color.TETO_RED_DARK, Color.FG_COLOR]
+        self.window_ta: List[ContainerWindow] = []
+        for i in range(3):
+            window = ContainerWindow(
+                DecoratedLabel(
+                    text="た",
+                    text_size=480,
+                    text_font=self.font2,
+                    text_color=window_ta_color[i],
+                ),
+                position=(90 + i * 130, 320),
+                size=(640, 640),
+                title="た",
+            )
+            window.widget.label.setFixedSize(
+                QFontMetrics(self.font2).tightBoundingRect("た").size()
+            )
+            self.window_ta.append(window)
+
 
 def main():
     app = Animation()
@@ -207,7 +234,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTION
-    start_from = 0
+    start_from = 23000
     stop_at = 0
 
     # 动画序列
@@ -308,7 +335,7 @@ def main():
             app.text_right.show()
         elif 29327 <= pos < 30300:
             app.text_right.widget.label.setText(
-                "<span style='font-size:240px;'>な</span>ぜ<br><span style='font-size:240px;'>な</span>ぜ"
+                "<span style='font-size:240px;'>な</span>ぜ—<br>—<span style='font-size:240px;'>な</span>ぜ"
             )
         elif 30300 <= pos < 30460:
             app.text_left.widget.label.setText("")
@@ -323,13 +350,15 @@ def main():
             )
         elif 32692 <= pos < 34000:
             app.text_right.hide()
-        elif 34000 <= pos < 34191:  # た た た
-            ...
-        elif 34191 <= pos < 34360:
-            ...
-        elif 34360 <= pos < 34558:
-            ...
-        elif 34558 <= pos < 36093:  # 大変な奴 ベラベラ 何言ってんの？
+        elif 34000 <= pos < 34200:  # た た た
+            app.window_ta[0].show()
+        elif 34200 <= pos < 34400:
+            app.window_ta[1].show()
+        elif 34400 <= pos < 34600:
+            app.window_ta[2].show()
+        elif 34600 <= pos < 36093:  # 大変な奴 ベラベラ 何言ってんの？
+            for i in range(3):
+                app.window_ta[i].hide()
             app.text_leftline.widget.label.setText("大変な奴")
             app.text_leftline.show()
         elif 36093 <= pos < 36993:
@@ -361,7 +390,7 @@ def main():
         elif 46366 <= pos < 48399:
             app.text_left.widget.label.setText("おい！<br>そこの人間！<br>")
         elif 48399 <= pos < 48766:
-            app.text_left.hide()
+            app.text_left.widget.label.setText("")
         elif 48766 <= pos < 49233:  # 武器、持ってる？
             app.text_left.widget.label.setText("武器、<br>")
         elif 49233 <= pos < 51300:
@@ -381,8 +410,69 @@ def main():
         elif 56365 <= pos < 56933:
             app.text_left.hide()
         elif 56933 <= pos < 57265:
-            app.text_left.widget.label.setText("だって")
-            app.text_left.show()
+            app.text_leftline.widget.label.setText("だって")
+            app.text_leftline.show()
+        elif 57265 <= pos < 59732:
+            app.text_leftline.widget.label.setText("どんなにバカ")
+        elif 59732 <= pos < 60032:
+            app.text_leftline.widget.label.setText("でも")
+        elif 60032 <= pos < 62565:
+            app.text_leftline.widget.label.setText("自分を撃つの")
+        elif 62565 <= pos < 62900:
+            app.text_leftline.widget.label.setText("もっと")
+        elif 62900 <= pos < 64892:
+            app.text_leftline.widget.label.setText("紙の上に")
+        elif 64892 <= pos < 66000:
+            app.text_leftline.widget.label.setText("臙脂が 必要")
+        elif 66000 <= pos < 66090:
+            app.text_leftline.hide()
+            app.window_emoji.widget.label.setText("▼(-_-)▼")
+            app.window_emoji.show()
+        elif 66090 <= pos < 66160:
+            app.window_emoji.widget.label.setText("")
+        elif 66160 <= pos < 66290:
+            app.window_emoji.widget.label.setText("▼(X_X)▼")
+        elif 66290 <= pos < 66360:
+            app.window_emoji.widget.label.setText("")
+        elif 66360 <= pos < 66460:
+            app.window_emoji.widget.label.setText("▼(^_^)▼")
+        elif 66460 <= pos < 66525:
+            app.window_emoji.widget.label.setText("")
+        elif 66525 <= pos < 66626:
+            app.window_emoji.widget.label.setText("▼(O3O)▼")
+        elif 66626 <= pos < 66690:
+            app.window_emoji.widget.label.setText("")
+        elif 66690 <= pos < 66790:
+            app.window_emoji.widget.label.setText("▼(=_=)▼")
+        elif 66790 <= pos < 68000:
+            app.window_emoji.hide()
+        elif 68000 <= pos < 70770:
+            app.text_leftline.widget.label.setText("巨大なパレットみたい")
+            app.text_leftline.show()
+        elif 70770 <= pos < 71630:
+            app.text_leftline.hide()
+        elif 71630 <= pos < 73690:
+            app.text_leftline.widget.label.setText("心臓と血管")
+            app.text_leftline.show()
+        elif 73690 <= pos < 74430:
+            app.text_leftline.widget.label.setText("今日も")
+        elif 74430 <= pos < 75960:
+            app.text_leftline.widget.label.setText("気づいてほしい")
+        elif 75960 <= pos < 77000:
+            app.text_leftline.widget.label.setText("困ったな")
+        elif 77000 <= pos < 79400:
+            app.text_leftline.hide()
+            # 神秘白色钻头.show()
+            ...
+        elif 79400 <= pos < 79600:
+            # 神秘白色钻头.hide()
+            ...
+        elif 79600 <= pos < 88200:
+            # 军火展示.show()
+            ...
+        elif 88200 <= pos < 90200:
+            # 军火展示.hide()
+            ...
 
     app.player.positionChanged.connect(sequence_update)
 

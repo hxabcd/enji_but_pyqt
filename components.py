@@ -40,6 +40,7 @@ def scaled_frame(frame: QPixmap):
 
 class Color:
     TETO_RED = QColor("#FF7C7F")
+    TETO_RED_DARK = QColor("#D87678")
     FG_COLOR = QColor("#474747")
     BG_COLOR = QColor("#F2EFF2")
 
@@ -88,10 +89,7 @@ class SequenceFrame(QLabel):
         self.fps = 30
         self.current_loop_duration = -1
 
-        frame_list = sorted(
-            os.listdir(res_name),
-            key=lambda x: int(re.match(r"\d+", x).group()),  # type: ignore
-        )
+        frame_list = sorted(os.listdir(res_name))
         for frame in frame_list:
             path = os.path.join(res_name, frame)
             pixmap = QPixmap(path)
