@@ -124,9 +124,11 @@ class SequenceFrame(QLabel):
         method: Literal["play_frame", "rotate_frame"] = "play_frame",
     ):
         """循环播放帧"""
-        if not hasattr(self, "timer") or method != self.current_loop_duration:
+        if not hasattr(self, "timer") or method != self.current_method:
             self.timer = QTimer()
             self.timer.timeout.connect(getattr(self, method))
+            if self.current_method == "rotate_frame":
+                self.reset_rotate()
             self.current_method = method
         if self.is_looping and duration != self.current_loop_duration:
             self.stop_loop()
@@ -188,7 +190,7 @@ class SequenceFrame(QLabel):
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
         if self.loop_on_show:
-            self.start_loop(self.current_loop_duration)  # type: ignore
+            self.start_loop(self.current_loop_duration, self.current_method)  # type: ignore
 
 
 class DecorationShape:
