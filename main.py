@@ -239,7 +239,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTIONS
-    start_from = 0
+    start_from = 56000
     stop_at = 0
     show_update = True
 

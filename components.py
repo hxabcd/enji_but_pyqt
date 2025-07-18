@@ -324,8 +324,8 @@ class DecoratedLabel(QWidget):
             self.label.adjustSize()
             self.adjustSize()
             parent: ContainerWindow = self.parentWidget().parentWidget()  # type: ignore
+            parent.adjustSize()
             parent.setFixedWidth(self.width() + 32)
-            parent.setFixedHeight(self.height() + 8)
             parent.relocate()
 
     def update_jitter(self):
