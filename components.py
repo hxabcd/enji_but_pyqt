@@ -265,11 +265,8 @@ class DecoratedLabel(QWidget):
         layout.setAlignment(Qt.AlignCenter)
 
         # 初始化装饰与抖动
-        self.jitter_enabled = jitter_enabled
-        self.jitter_on_show = False
-        if self.jitter_enabled:
-            self.timer = QTimer(self)
-            self.timer.timeout.connect(self.update_jitter)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_jitter)
         self.set_decorations(decorations, jitter_frequency, jitter_offset)
 
         # 初始化背景
@@ -295,15 +292,14 @@ class DecoratedLabel(QWidget):
             return
 
         self.decorations = decorations
-        if self.jitter_enabled:
-            self.jitter_frequency = jitter_frequency
-            self.jitter_offset = jitter_offset
-            self.jitter_offsets = [QPoint(0, 0) for _ in self.decorations]
+        self.jitter_frequency = jitter_frequency
+        self.jitter_offset = jitter_offset
+        self.jitter_offsets = [QPoint(0, 0) for _ in self.decorations]
 
-            if self.decorations:
-                self.timer.start(self.jitter_frequency)
-            else:
-                self.timer.stop()
+        if self.decorations:
+            self.timer.start(self.jitter_frequency)
+        else:
+            self.timer.stop()
         self.update()
 
     def set_font_size(self, size: int):
@@ -334,8 +330,6 @@ class DecoratedLabel(QWidget):
 
     def update_jitter(self):
         """更新抖动"""
-        if not self.jitter_enabled:
-            return
         self.jitter_offsets = [
             QPoint(
                 random.randint(-self.jitter_offset, self.jitter_offset),
@@ -376,19 +370,6 @@ class DecoratedLabel(QWidget):
                 painter.drawPolygon(points)
 
             painter.restore()
-
-    # 隐藏时停止循环，显示时恢复循环
-
-    def hideEvent(self, event: QHideEvent) -> None:
-        super().hideEvent(event)
-        if self.jitter_enabled:
-            self.jitter_on_show = True
-            self.jitter_enabled = False
-
-    def showEvent(self, event: QShowEvent) -> None:
-        super().showEvent(event)
-        if self.jitter_on_show:
-            self.jitter_enabled = False
 
 
 class ContainerWindow(QMainWindow):
