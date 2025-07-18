@@ -103,11 +103,15 @@ class SequenceFrame(QLabel):
         method: Literal["play_frame", "rotate_frame"] = "play_frame",
     ):
         """循环播放帧"""
-        if not hasattr(self, "timer") or method != getattr(self, "current_method"):
+        if not hasattr(self, "timer") or method != getattr(
+            self, "current_method", None
+        ):
             self.timer = QTimer()
             self.timer.timeout.connect(getattr(self, method))
             self.current_method = method
-        if self.timer.isActive and duration != getattr(self, "current_loop_duration"):
+        if self.timer.isActive and duration != getattr(
+            self, "current_loop_duration", None
+        ):
             self.timer.stop()
         if not self.timer.isActive():
             self.timer.start(1000 * duration // self.fps)
