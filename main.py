@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from PySide6.QtCore import QPoint, Qt, QUrl
@@ -239,10 +240,24 @@ def main():
     # DEBUG OPTION
     start_from = 33000
     stop_at = 0
+    show_update = True
+
+    cnt = 0
+    current_sec = time.localtime()
+
+    def count():
+        nonlocal cnt, current_sec
+        if time.localtime() != current_sec:
+            current_sec = time.localtime()
+            print(f"Updated {cnt} times in 1 second")
+            cnt = 0
+        cnt += 1
 
     # 动画序列
     def sequence_update(pos):
         nonlocal start_from
+        if show_update:
+            count()
         if start_from and pos < start_from:
             app.player.setPosition(start_from)
             return
