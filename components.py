@@ -9,10 +9,12 @@ from PySide6.QtGui import (
     QBrush,
     QColor,
     QFont,
+    QHideEvent,
     QPainter,
     QPen,
     QPixmap,
     QPolygon,
+    QShowEvent,
     QTransform,
 )
 from PySide6.QtWidgets import (
@@ -64,6 +66,10 @@ RESOLUTION = [1920, 1080]
 
 
 def process_position(position: tuple[int | str, int | str], size: tuple[int, int]):
+    """处理窗口位置
+    窗口位置为mid时，会基于窗口大小被转换为屏幕中心位置
+    窗口位置含gapLXX/gapRXX时，会自动转换为据屏幕边缘XX的位置
+    """
     pos = [0, 0]
     for i in range(2):
         if isinstance(position[i], int):
@@ -106,30 +112,34 @@ class SequenceFrame(QLabel):
             raise ValueError(f"No frames found in {res_name}")
         self.setPixmap(scaled_frame(self.frames[0]))
 
+        # 初始化循环帧
+        self.is_looping = False
+        self.current_loop_duration = None
+        self.current_method = None
+        self.loop_on_show = False
+
     def start_loop(
         self,
         duration: int,
         method: Literal["play_frame", "rotate_frame"] = "play_frame",
     ):
         """循环播放帧"""
-        if not hasattr(self, "timer") or method != getattr(
-            self, "current_method", None
-        ):
+        if not hasattr(self, "timer") or method != self.current_loop_duration:
             self.timer = QTimer()
             self.timer.timeout.connect(getattr(self, method))
             self.current_method = method
-        if self.timer.isActive and duration != getattr(
-            self, "current_loop_duration", None
-        ):
-            self.timer.stop()
-        if not self.timer.isActive():
+        if self.is_looping and duration != self.current_loop_duration:
+            self.stop_loop()
+        if not self.is_looping:
             self.timer.start(1000 * duration // self.fps)
+            self.is_looping = True
             self.current_loop_duration = duration
 
     def stop_loop(self):
         """停止循环帧"""
-        if hasattr(self, "timer") and self.timer.isActive():
+        if hasattr(self, "timer") and self.is_looping:
             self.timer.stop()
+            self.is_looping = False
 
     def play_frame(self, index: int | None = None):
         """播放帧，可向前/向后，index 为空时切换下一帧"""
@@ -163,8 +173,22 @@ class SequenceFrame(QLabel):
         self.setPixmap(scaled_frame(result))
 
     def reset_rotate(self):
+        """重置旋转状态"""
         self.rotate_frame = 0
         self.setPixmap(self.frames[self.index])
+
+    # 隐藏时停止循环，显示时恢复循环
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        super().hideEvent(event)
+        if self.is_looping:
+            self.loop_on_show = True
+            self.stop_loop()
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        if self.loop_on_show:
+            self.start_loop(self.current_loop_duration)  # type: ignore
 
 
 class DecorationShape:
@@ -199,24 +223,12 @@ class DecoratedLabel(QWidget):
         pixmap: QPixmap | None = None,
         decorations: List[Decoration] = [],
         background_color: QColor = Color.BG_COLOR,
+        jitter_enabled: bool = False,
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
         auto_resize: bool = False,
     ):
-        """带有装饰几何图形的标签，几何图形可随机抖动
-
-        Args:
-            text (str, optional): 文本
-            text_size (int, optional): 字号
-            text_font (QFont, optional): 字体
-            text_color (QColor, optional): 文本颜色
-            text_align (Qt.AlignmentFlag): 对齐方式
-            pixmap (QPixmap, optional): 图像（QPixmap）
-            decorations (List[Decoration], optional): 装饰元素
-            background_color (QColor, optional): 背景颜色
-            jitter_frequency (int, optional): 抖动频率（ms）
-            jitter_offset (int, optional): 抖动幅度
-        """
+        """带有装饰几何图形的标签，几何图形可随机抖动"""
         super().__init__()
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -251,8 +263,11 @@ class DecoratedLabel(QWidget):
         layout.setAlignment(Qt.AlignCenter)
 
         # 初始化装饰与抖动
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_jitter)
+        self.jitter_enabled = jitter_enabled
+        self.jitter_on_show = False
+        if self.jitter_enabled:
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self.update_jitter)
         self.set_decorations(decorations, jitter_frequency, jitter_offset)
 
         # 初始化背景
@@ -270,22 +285,23 @@ class DecoratedLabel(QWidget):
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
     ):
-        if not (
-            decorations != getattr(self, "decorations", None)
-            or jitter_frequency != getattr(self, "jitter_frequency", None)
-            or jitter_offset != getattr(self, "jitter_offset", None)
+        if (
+            decorations == getattr(self, "decorations", None)
+            and jitter_frequency == getattr(self, "jitter_frequency", None)
+            and jitter_offset == getattr(self, "jitter_offset", None)
         ):
             return
 
         self.decorations = decorations
-        self.jitter_frequency = jitter_frequency
-        self.jitter_offset = jitter_offset
-        self.jitter_offsets = [QPoint(0, 0) for _ in self.decorations]
+        if self.jitter_enabled:
+            self.jitter_frequency = jitter_frequency
+            self.jitter_offset = jitter_offset
+            self.jitter_offsets = [QPoint(0, 0) for _ in self.decorations]
 
-        if self.decorations:
-            self.timer.start(self.jitter_frequency)
-        else:
-            self.timer.stop()
+            if self.decorations:
+                self.timer.start(self.jitter_frequency)
+            else:
+                self.timer.stop()
         self.update()
 
     def set_font_size(self, size: int):
@@ -316,6 +332,8 @@ class DecoratedLabel(QWidget):
 
     def update_jitter(self):
         """更新抖动"""
+        if not self.jitter_enabled:
+            return
         self.jitter_offsets = [
             QPoint(
                 random.randint(-self.jitter_offset, self.jitter_offset),
@@ -357,6 +375,19 @@ class DecoratedLabel(QWidget):
 
             painter.restore()
 
+    # 隐藏时停止循环，显示时恢复循环
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        super().hideEvent(event)
+        if self.jitter_enabled:
+            self.jitter_on_show = True
+            self.jitter_enabled = False
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        if self.jitter_on_show:
+            self.jitter_enabled = False
+
 
 class ContainerWindow(QMainWindow):
     def __init__(
@@ -397,8 +428,11 @@ class ContainerWindow(QMainWindow):
             self.resize(*scaled(size))
             self.move(*scaled(process_position(position, size)))
 
-        self._current_offset = 1
-        self._current_interval = 33
+        # 初始化晃动
+        self.is_shaking = False
+        self.current_offset = None
+        self.current_interval = None
+        self.shake_on_show = False
 
         if shake:
             self.start_shake()
@@ -415,30 +449,44 @@ class ContainerWindow(QMainWindow):
             offset (int, optional): 抖动幅度. Defaults to 1.
             interval (int, optional): 抖动频率(ms). Defaults to 33.
         """
-        if not hasattr(self, "_shake_timer"):
+        if not hasattr(self, "timer"):
             self._original_pos = self.pos()
-            self._shake_timer = QTimer(self)
-        if (self._shake_timer.isActive() and offset != self._current_offset) or (
-            self._shake_timer.isActive() and interval != self._current_interval
+            self.timer = QTimer(self)
+        if self.is_shaking and (
+            (offset != self.current_offset) or (interval != self.current_interval)
         ):
-            self._shake_timer.stop()
+            self.stop_shake
+        if not self.is_shaking:
 
-        if not self._shake_timer.isActive():
-
-            def _do_shake():
+            def do_shake():
                 dx = random.randint(-offset, offset)
                 dy = random.randint(-offset, offset)
                 self.move(self._original_pos + QPoint(dx, dy))
 
-            self._current_offset = offset
-            self._current_interval = interval
+            self.current_offset = offset
+            self.current_interval = interval
 
-            self._shake_timer.timeout.connect(_do_shake)
-            self._shake_timer.start(interval)
+            self.timer.timeout.connect(do_shake)
+            self.timer.start(interval)
+            self.is_shaking = False
 
     def stop_shake(self):
-        if hasattr(self, "_shake_timer") and self._shake_timer.isActive():
-            self._shake_timer.stop()
+        if hasattr(self, "shake_timer") and self.is_shaking:
+            self.timer.stop()
+            self.is_shaking = False
+
+    # 隐藏时停止循环，显示时恢复循环
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        super().hideEvent(event)
+        if self.is_shaking:
+            self.shake_on_show = True
+            self.stop_shake()
+
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        if self.shake_on_show:
+            self.start_shake(self.current_offset, self.current_interval)  # type: ignore
 
 
 class RopeWidget(QWidget):

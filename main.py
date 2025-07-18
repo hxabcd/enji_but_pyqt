@@ -79,6 +79,7 @@ class Animation(QApplication):
                         rotation=166,
                     ),
                 ],
+                jitter_enabled=True,
                 jitter_frequency=333,
                 jitter_offset=8,
             ),
