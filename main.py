@@ -237,11 +237,12 @@ def main():
 
     app.player.play()
 
-    # DEBUG OPTION
+    # DEBUG OPTIONS
     start_from = 33000
     stop_at = 0
     show_update = True
 
+    # 性能计数器
     cnt = 0
     current_sec = time.localtime()
 
@@ -286,8 +287,8 @@ def main():
             app.window_yan.hide()
             app.window_zhi.hide()
             app.window_small_teto2.hide()
-            app.window_emoji.widget.update_text("▼(-_-)▼")
             app.window_emoji.show()
+            app.window_emoji.widget.update_text("▼(-_-)▼")
         elif 14272 <= pos < 20459:
             app.window_emoji.hide()
             app.window_yan.show()
@@ -300,10 +301,10 @@ def main():
             app.window_small_teto2.widget.start_loop(1)
         elif 23000 <= pos < 24116:  # え？うそ
             app.window_small_teto2.hide()
+            app.text_left.show()
             app.text_left.widget.update_text(
                 "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>　　"
             )
-            app.text_left.show()
         elif 24116 <= pos < 25360:
             app.text_left.widget.update_text(
                 "<span style='font-size:560px;'>え</span><span style='font-size:160px;'>？</span><br>うそ"
@@ -312,6 +313,8 @@ def main():
             app.text_left.widget.update_text("")
             app.text_left.widget.set_decorations([])
         elif 25560 <= pos < 26000:  # 私 天才じゃないの？
+            app.text_left.show()
+            app.text_left.widget.set_font_size(150)
             app.text_left.widget.update_text(
                 "<span style='font-size:240px;'>私</span> ——<br><br>"
             )
@@ -332,8 +335,6 @@ def main():
                     ),
                 ]
             )
-            app.text_left.widget.set_font_size(150)
-            app.text_left.show()
         elif 26000 <= pos < 26700:
             app.text_left.widget.update_text(
                 "<span style='font-size:240px;'>私</span> 天才<br>————<br>————"
@@ -345,12 +346,12 @@ def main():
         elif 28650 <= pos < 28927:
             app.text_left.hide()
         elif 28927 <= pos < 29327:  # なぜ なぜ　占い効かない
+            app.text_right.show()
             app.text_right.widget.update_text(
                 "<span style='font-size:240px;'>な</span>ぜ<br><span style='font-size:240px;'>—</span>—"
             )
             app.text_right.widget.set_font_size(160)
             app.text_right.widget.set_alignment(Qt.AlignmentFlag.AlignCenter)
-            app.text_right.show()
         elif 29327 <= pos < 30300:
             app.text_right.widget.update_text(
                 "<span style='font-size:240px;'>な</span>ぜ—<br>—<span style='font-size:240px;'>な</span>ぜ"
@@ -377,34 +378,34 @@ def main():
         elif 34600 <= pos < 36093:  # 大変な奴 ベラベラ 何言ってんの？
             for i in range(3):
                 app.window_ta[i].hide()
-            app.text_leftline.widget.update_text("大変な奴")
             app.text_leftline.show()
+            app.text_leftline.widget.update_text("大変な奴")
         elif 36093 <= pos < 36993:
-            app.text_rightline.widget.update_text("べうべう")
             app.text_rightline.show()
+            app.text_rightline.widget.update_text("べうべう")
         elif 36993 <= pos < 39730:
             app.text_leftline.hide()
             app.text_rightline.hide()
-            app.text_centerline.widget.update_text("何言ってんの？")
             app.text_centerline.show()
+            app.text_centerline.widget.update_text("何言ってんの？")
         elif 39730 <= pos < 41063:  # どうでもいいよ、普通の僕に関係ないでしょ？
             app.text_centerline.hide()
-            app.text_leftline.widget.update_text("どうでもいいよ")
             app.text_leftline.show()
+            app.text_leftline.widget.update_text("どうでもいいよ")
         elif 41063 <= pos < 42531:
-            app.text_rightline.widget.update_text("普通の僕に")
             app.text_rightline.show()
+            app.text_rightline.widget.update_text("普通の僕に")
         elif 42531 <= pos < 44499:
             app.text_leftline.hide()
             app.text_rightline.hide()
-            app.text_centerline.widget.update_text("関係ないでしょ？")
             app.text_centerline.show()
+            app.text_centerline.widget.update_text("関係ないでしょ？")
         # 这里理应有个teto的入场动画
         elif 45898 <= pos < 46366:  # おい！そこの人間！
             app.text_centerline.hide()
+            app.text_left.show()
             app.text_left.widget.set_font_size(120)
             app.text_left.widget.update_text("おい！<br>")
-            app.text_left.show()
         elif 46366 <= pos < 48399:
             app.text_left.widget.update_text("おい！<br>そこの人間！<br>")
         elif 48399 <= pos < 48766:
@@ -417,8 +418,8 @@ def main():
         elif 51300 <= pos < 51632:
             app.text_left.hide()
         elif 51632 <= pos < 52698:  # 聞こえたか？聞こえたか？ 肖像 喋った
-            app.text_left.widget.update_text("聞こえたか？<br>")
             app.text_left.show()
+            app.text_left.widget.update_text("聞こえたか？<br>")
         elif 52698 <= pos < 53565:
             app.text_left.widget.update_text("聞こえたか？<br>聞こえたか？<br>")
         elif 53565 <= pos < 56365:
@@ -428,8 +429,8 @@ def main():
         elif 56365 <= pos < 56933:
             app.text_left.hide()
         elif 56933 <= pos < 57265:
-            app.text_leftline.widget.update_text("だって")
             app.text_leftline.show()
+            app.text_leftline.widget.update_text("だって")
         elif 57265 <= pos < 59732:
             app.text_leftline.widget.update_text("どんなにバカ")
         elif 59732 <= pos < 60032:

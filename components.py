@@ -294,9 +294,9 @@ class DecoratedLabel(QWidget):
             """)
 
     def update_text(self, text: str, resize: bool | None = None):
-        if self.label.text() == text:
+        if self.label.text() == text + " ":
             return
-        self.label.setText(f" {text} ")
+        self.label.setText(f"{text} ")
         if resize if resize is not None else self.auto_resize:
             self.label.adjustSize()
             self.adjustSize()
