@@ -231,6 +231,13 @@ class Animation(QApplication):
             )
             self.window_ta.append(window)
 
+        self.window_img1 = ContainerWindow(
+            SequenceFrame("frames/img1"),
+            position=("mid", "mid"),
+            size=(640, 640),
+            title="看不出是什么的神必旋转物体",
+        )
+
 
 def main():
     app = Animation()
@@ -238,7 +245,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTIONS
-    start_from = 33000
+    start_from = 90000
     stop_at = 0
     show_update = True
 
@@ -493,17 +500,20 @@ def main():
             # 军火展示.hide()
             ...
         elif 90200 <= pos < 91000:
-            # 神秘图形旋转
-            ...
+            app.window_img1.show()
+            app.window_img1.widget.start_loop(1, "rotate_frame")
         elif 91000 <= pos < 93800:
-            app.text_centerline.widget.update_text("マスカレード、突発暗殺事件")
             app.text_centerline.show()
+            app.text_centerline.widget.set_font_size(72)
+            app.text_centerline.widget.update_text("マスカレード、突発暗殺事件")
         elif 93800 <= pos < 96600:
             app.text_centerline.widget.update_text("死者の袖口、反応する硝煙")
         elif 96600 <= pos < 99500:
+            app.text_centerline.widget.update_text("エッシャーの曖昧、自らを指す両手")
+        elif 99500 <= pos < 101900:
             app.text_centerline.hide()
         elif 101900 <= pos < 102400:
-            app.window_small_teto2.hide()
+            app.window_img1.hide()
 
     app.player.positionChanged.connect(sequence_update)
 

@@ -13,6 +13,7 @@ from PySide6.QtGui import (
     QPen,
     QPixmap,
     QPolygon,
+    QTransform,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -141,21 +142,29 @@ class SequenceFrame(QLabel):
         else:
             raise IndexError("Index out of range for frames.")
 
-    def rotate_frame(self, angle=1):
+    def rotate_frame(self, angle=0.5625):
         """旋转帧"""
-        # 貌似不可用
-        transform = QPixmap(self.frames[self.index])
-        painter = QPainter()
-        rotated = QPixmap(transform.size())
-        rotated.fill(Qt.transparent)
-        painter.begin(rotated)
-        center = transform.rect().center()
-        painter.translate(center)
-        painter.rotate(angle)
-        painter.translate(-center)
-        painter.drawPixmap(0, 0, transform)
+        pixmap = self.frames[self.index]
+        self.rotated_angle = angle + getattr(self, "rotated_angle", 0)
+
+        transform = QTransform().rotate(self.rotated_angle)
+        rotated = pixmap.transformed(transform, mode=Qt.SmoothTransformation)
+
+        # 将旋转后的图像绘制回原尺寸画布中居中裁剪
+        result = QPixmap(pixmap.size())
+        result.fill(Qt.transparent)
+
+        painter = QPainter(result)
+        x = (pixmap.width() - rotated.width()) // 2
+        y = (pixmap.height() - rotated.height()) // 2
+        painter.drawPixmap(x, y, rotated)
         painter.end()
-        self.setPixmap(scaled_frame(rotated))
+
+        self.setPixmap(scaled_frame(result))
+
+    def reset_rotate(self):
+        self.rotate_frame = 0
+        self.setPixmap(self.frames[self.index])
 
 
 class DecorationShape:
