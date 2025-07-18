@@ -234,7 +234,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTION
-    start_from = 23000
+    start_from = 77000
     stop_at = 0
 
     # 动画序列
@@ -462,17 +462,29 @@ def main():
             app.text_leftline.widget.label.setText("困ったな")
         elif 77000 <= pos < 79400:
             app.text_leftline.hide()
-            # 神秘白色钻头.show()
-            ...
+            app.window_small_teto2.show()
+            app.window_small_teto2.widget.start_loop(3)
         elif 79400 <= pos < 79600:
-            # 神秘白色钻头.hide()
-            ...
+            app.window_small_teto2.widget.stop_loop()
+            app.window_small_teto2.hide()
         elif 79600 <= pos < 88200:
             # 军火展示.show()
             ...
         elif 88200 <= pos < 90200:
             # 军火展示.hide()
             ...
+        elif 90200 <= pos < 91000:
+            # 神秘图形旋转
+            ...
+        elif 91000 <= pos < 93800:
+            app.text_centerline.widget.label.setText("マスカレード、突発暗殺事件")
+            app.text_centerline.show()
+        elif 93800 <= pos < 96600:
+            app.text_centerline.widget.label.setText("死者の袖口、反応する硝煙")
+        elif 96600 <= pos < 99500:
+            app.text_centerline.hide()
+        elif 101900 <= pos < 102400:
+            app.window_small_teto2.hide()
 
     app.player.positionChanged.connect(sequence_update)
 

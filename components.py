@@ -2,7 +2,7 @@ import os
 import random
 import re
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Literal
 
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QPolygon
@@ -87,7 +87,6 @@ class SequenceFrame(QLabel):
         self.frames: List[QPixmap] = []
         self.index = 0
         self.fps = 30
-        self.current_loop_duration = -1
 
         frame_list = sorted(os.listdir(res_name))
         for frame in frame_list:
@@ -98,12 +97,17 @@ class SequenceFrame(QLabel):
             raise ValueError(f"No frames found in {res_name}")
         self.setPixmap(scaled_frame(self.frames[0]))
 
-    def start_loop(self, duration: int):
+    def start_loop(
+        self,
+        duration: int,
+        method: Literal["play_frame", "rotate_frame"] = "play_frame",
+    ):
         """循环播放帧"""
-        if not hasattr(self, "timer"):
+        if not hasattr(self, "timer") or method != getattr(self, "current_method"):
             self.timer = QTimer()
-            self.timer.timeout.connect(self.play_frame)
-        if self.timer.isActive and duration != self.current_loop_duration:
+            self.timer.timeout.connect(getattr(self, method))
+            self.current_method = method
+        if self.timer.isActive and duration != getattr(self, "current_loop_duration"):
             self.timer.stop()
         if not self.timer.isActive():
             self.timer.start(1000 * duration // self.fps)
@@ -124,6 +128,22 @@ class SequenceFrame(QLabel):
             self.setPixmap(scaled_frame(self.frames[self.index]))
         else:
             raise IndexError("Index out of range for frames.")
+
+    def rotate_frame(self, angle=1):
+        """旋转帧"""
+        # 貌似不可用
+        transform = QPixmap(self.frames[self.index])
+        painter = QPainter()
+        rotated = QPixmap(transform.size())
+        rotated.fill(Qt.transparent)
+        painter.begin(rotated)
+        center = transform.rect().center()
+        painter.translate(center)
+        painter.rotate(angle)
+        painter.translate(-center)
+        painter.drawPixmap(0, 0, transform)
+        painter.end()
+        self.setPixmap(scaled_frame(rotated))
 
 
 class DecorationShape:
@@ -340,6 +360,12 @@ class ContainerWindow(QMainWindow):
             self.start_shake()
 
     def start_shake(self, offset=1, interval=33):
+        """抖动窗口
+
+        Args:
+            offset (int, optional): 抖动幅度. Defaults to 1.
+            interval (int, optional): 抖动频率(ms). Defaults to 33.
+        """
         if not hasattr(self, "timer"):
             self._original_pos = self.pos()
             self._shake_timer = QTimer(self)
