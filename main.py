@@ -66,7 +66,7 @@ class Animation(QApplication):
 
         self.window_starring = ContainerWindow(
             DecoratedLabel(
-                pixmap=QPixmap("frames/starring/0.png"),
+                pixmap=QPixmap("frames/starring/0000.png"),
                 decorations=[
                     Decoration(
                         position=QPoint(64, 86),
@@ -84,7 +84,7 @@ class Animation(QApplication):
                 jitter_offset=8,
             ),
             position=("mid", "mid"),
-            size=(460, 200),
+            size=(480, 200),
             title="Starring",
         )
 
@@ -239,7 +239,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTIONS
-    start_from = 90000
+    start_from = 0
     stop_at = 0
     show_update = True
 
