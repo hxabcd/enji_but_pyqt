@@ -193,7 +193,7 @@ class DecoratedLabel(QWidget):
         text_size: int | None = None,
         text_font: QFont = QFont(),
         is_bold: bool = False,
-        letter_spacing: str = "-28px",
+        letter_spacing: str = "-16px",
         text_color: QColor = Color.FG_COLOR,
         text_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignCenter,
         pixmap: QPixmap | None = None,
@@ -305,12 +305,13 @@ class DecoratedLabel(QWidget):
     def update_text(self, text: str, resize: bool | None = None):
         if self.label.text() == text + " ":
             return
-        self.label.setText(f"{text} ")
+        self.label.setText(text + " ")
         if resize if resize is not None else self.auto_resize:
             self.label.adjustSize()
             self.adjustSize()
             parent: ContainerWindow = self.parentWidget().parentWidget()  # type: ignore
-            parent.adjustSize()
+            parent.setFixedWidth(self.width() + 32)
+            parent.setFixedHeight(self.height() + 8)
             parent.relocate()
 
     def update_jitter(self):

@@ -65,13 +65,6 @@ class Animation(QApplication):
         )
 
         self.window_starring = ContainerWindow(
-            SequenceFrame("frames/starring"),
-            position=(729, 445),
-            size=(460, 200),
-            title="Starring",
-        )
-
-        self.window_starring = ContainerWindow(
             DecoratedLabel(
                 pixmap=QPixmap("frames/starring/0.png"),
                 decorations=[
@@ -159,7 +152,7 @@ class Animation(QApplication):
                 text_align=Qt.AlignmentFlag.AlignCenter,
             ),
             position=("mid", "mid"),
-            size=(1280, 840),
+            size=(1400, 840),
             title="神秘字符钻头",
             shake=False,
         )
@@ -494,10 +487,10 @@ def main():
             app.window_small_teto2.widget.stop_loop()
             app.window_small_teto2.hide()
         elif 79600 <= pos < 88200:
-            # 军火展示.show()
+            # TODO: 军火展示.show()
             ...
         elif 88200 <= pos < 90200:
-            # 军火展示.hide()
+            # TODO: 军火展示.hide()
             ...
         elif 90200 <= pos < 91000:
             app.window_img1.show()
