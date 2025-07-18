@@ -5,7 +5,15 @@ from dataclasses import dataclass, field
 from typing import List, Literal
 
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QPolygon
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QFont,
+    QPainter,
+    QPen,
+    QPixmap,
+    QPolygon,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QLabel,
@@ -173,7 +181,7 @@ class DecoratedLabel(QWidget):
     def __init__(
         self,
         text: str = "",
-        text_size: int = 18,
+        text_size: int | None = None,
         text_font: QFont = QFont(),
         is_bold: bool = False,
         letter_spacing: str = "-28px",
@@ -184,6 +192,7 @@ class DecoratedLabel(QWidget):
         background_color: QColor = Color.BG_COLOR,
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
+        auto_resize: bool = False,
     ):
         """带有装饰几何图形的标签，几何图形可随机抖动
 
@@ -224,7 +233,8 @@ class DecoratedLabel(QWidget):
             self.label.setText(text)
             self.text_font = text_font
             self.text_font.setBold(is_bold)
-            self.set_font_size(text_size)
+            if text_size:
+                self.set_font_size(text_size)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
@@ -241,6 +251,9 @@ class DecoratedLabel(QWidget):
         palette = self.palette()
         palette.setColor(self.backgroundRole(), background_color)
         self.setPalette(palette)
+
+        # 自动缩放
+        self.auto_resize = auto_resize
 
     def set_decorations(
         self,
@@ -279,6 +292,17 @@ class DecoratedLabel(QWidget):
                 letter-spacing: {self.letter_spacing};
                 text-align: {ALIGN_MAP[flag]};
             """)
+
+    def update_text(self, text: str, resize: bool | None = None):
+        if self.label.text() == text:
+            return
+        self.label.setText(f" {text} ")
+        if resize if resize is not None else self.auto_resize:
+            self.label.adjustSize()
+            self.adjustSize()
+            parent: ContainerWindow = self.parentWidget().parentWidget()  # type: ignore
+            parent.adjustSize()
+            parent.relocate()
 
     def update_jitter(self):
         """更新抖动"""
@@ -329,7 +353,7 @@ class ContainerWindow(QMainWindow):
         self,
         widget: SequenceFrame | DecoratedLabel | QLabel,
         position: tuple[int | str, int | str],
-        size: tuple[int, int],
+        size: tuple[int, int] | None = None,
         title: str | None = None,
         shake: bool = False,
     ):
@@ -343,8 +367,7 @@ class ContainerWindow(QMainWindow):
         """
         super().__init__()
 
-        self.move(*scaled(process_position(position, size)))
-        self.resize(*scaled(size))
+        self.position = position
         if title:
             self.setWindowTitle(title)
         self.widget = widget
@@ -357,11 +380,23 @@ class ContainerWindow(QMainWindow):
         layout.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.widget, stretch=1)
 
+        if size is None:
+            self.adjustSize()
+            self.relocate()
+        else:
+            self.resize(*scaled(size))
+            self.move(*scaled(process_position(position, size)))
+
         self._current_offset = 1
         self._current_interval = 33
 
         if shake:
             self.start_shake()
+
+    def relocate(self):
+        size = self.size().width(), self.size().height()
+        self.move(*scaled(process_position(self.position, size)))
+        self._original_pos = self.pos()
 
     def start_shake(self, offset=1, interval=33):
         """抖动窗口
@@ -370,11 +405,11 @@ class ContainerWindow(QMainWindow):
             offset (int, optional): 抖动幅度. Defaults to 1.
             interval (int, optional): 抖动频率(ms). Defaults to 33.
         """
-        if not hasattr(self, "timer"):
+        if not hasattr(self, "_shake_timer"):
             self._original_pos = self.pos()
             self._shake_timer = QTimer(self)
-        if (self._shake_timer.isActive and offset != self._current_offset) or (
-            self._shake_timer.isActive and interval != self._current_interval
+        if (self._shake_timer.isActive() and offset != self._current_offset) or (
+            self._shake_timer.isActive() and interval != self._current_interval
         ):
             self._shake_timer.stop()
 
