@@ -429,3 +429,63 @@ class ContainerWindow(QMainWindow):
     def stop_shake(self):
         if hasattr(self, "_shake_timer") and self._shake_timer.isActive():
             self._shake_timer.stop()
+
+
+class RopeWidget(QWidget):
+    def __init__(self, target_window: QMainWindow):
+        super().__init__()
+        self.target_window = target_window
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.showFullScreen()
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update)
+        self.timer.start(1000 // 165)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        pen = QPen(QColor("#CDA4AB"), 4)
+        painter.setPen(pen)
+
+        screen_center = QPoint(self.width() // 2, -300)  # 固定点在屏幕外上方
+
+        win_geom = self.target_window.geometry()
+        p1 = QPoint(win_geom.left() + 64, win_geom.top() - 32)  # 左上角
+        p2 = QPoint(win_geom.center().x(), win_geom.top() - 32)  # 中上
+        p3 = QPoint(win_geom.right() - 64, win_geom.top() - 32)  # 右上角
+
+        for p in [p1, p2, p3]:
+            painter.drawLine(screen_center, p)
+
+
+class HangingWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(704, 284, 512, 512)
+        self.setWindowTitle("神秘木偶钻头")
+
+        self.widget = SequenceFrame("frames/doll_teto")
+
+        placeholder = QWidget()
+        placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
+        self.setCentralWidget(placeholder)
+        layout = QVBoxLayout(placeholder)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.widget, stretch=1)
+
+        self._drag_pos = None
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = (
+                event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            )
+
+    def mouseMoveEvent(self, event):
+        if self._drag_pos and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
