@@ -181,13 +181,13 @@ class SequenceFrame(QLabel):
 
     # 隐藏时停止循环，显示时恢复循环
 
-    def hideEvent(self, event: QHideEvent) -> None:
+    def hideEvent(self, event: QHideEvent):
         super().hideEvent(event)
         if self.is_looping:
             self.loop_on_show = True
             self.stop_loop()
 
-    def showEvent(self, event: QShowEvent) -> None:
+    def showEvent(self, event: QShowEvent):
         super().showEvent(event)
         if self.loop_on_show:
             self.start_loop(self.current_loop_duration, self.current_method)  # type: ignore
@@ -225,7 +225,6 @@ class DecoratedLabel(QWidget):
         pixmap: QPixmap | None = None,
         decorations: List[Decoration] = [],
         background_color: QColor = Color.BG_COLOR,
-        jitter_enabled: bool = False,
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
         auto_resize: bool = False,
