@@ -11,3 +11,4 @@ wheels/
 
 test*.py
 lyric.txt
+debug.env

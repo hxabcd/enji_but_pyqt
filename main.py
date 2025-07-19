@@ -238,10 +238,11 @@ def main():
 
     app.player.play()
 
-    # DEBUG OPTIONS
-    start_from = 0
-    stop_at = 0
-    show_update = True
+    # 载入调试选项
+    debug = os.getenv("DEBUG", "false").lower() == "true"
+    start_from = int(os.getenv("START_FROM", "0"))
+    stop_at = int(os.getenv("STOP_AT", "0"))
+    show_update = os.getenv("SHOW_UPDATE", "false").lower() == "true"
 
     # 性能计数器
     cnt = 0
@@ -257,15 +258,15 @@ def main():
 
     # 动画序列
     def sequence_update(pos):
-        nonlocal start_from
-        if show_update:
-            count()
-        if start_from and pos < start_from:
-            app.player.setPosition(start_from)
-            return
-        if stop_at and pos > stop_at:
-            app.player.stop()
-            return
+        if debug:
+            if show_update:
+                count()
+            if start_from and pos < start_from:
+                app.player.setPosition(start_from)
+                return
+            if stop_at and pos > stop_at:
+                app.player.stop()
+                return
         if pos < 9160:
             app.window_yan.show()
             app.window_zhi.show()
