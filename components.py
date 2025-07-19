@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import re
@@ -100,14 +101,20 @@ class SequenceFrame(QLabel):
 
         # 初始化序列帧
         self.frames: List[QPixmap] = []
+        self.frames_map: dict[str, QPixmap] = {}
         self.index = 0
         self.fps = 30
 
         frame_list = sorted(os.listdir(res_name))
         for frame in frame_list:
+            if frame == "metadata.json":
+                with open(os.path.join(res_name, frame), encoding="utf-8") as f:
+                    self.metadata: dict[str, str] = json.load(f)
+                continue
             path = os.path.join(res_name, frame)
             pixmap = QPixmap(path)
             self.frames.append(pixmap)
+            self.frames_map[frame] = pixmap
         if not self.frames:
             raise ValueError(f"No frames found in {res_name}")
         self.setPixmap(scaled_frame(self.frames[0]))
@@ -121,7 +128,7 @@ class SequenceFrame(QLabel):
     def start_loop(
         self,
         duration: int,
-        method: Literal["play_frame", "rotate_frame"] = "play_frame",
+        method: Literal["play_frame", "play_keyframe", "rotate_frame"] = "play_frame",
     ):
         """循环播放帧"""
         if not hasattr(self, "timer") or method != self.current_method:
@@ -147,12 +154,21 @@ class SequenceFrame(QLabel):
         """播放帧，可向前/向后，index 为空时切换下一帧"""
         if index is None:
             self.index = (self.index + 1) % len(self.frames)
-            self.setPixmap(scaled_frame(self.frames[self.index]))
         elif abs(index) < len(self.frames):
             self.index = index if index > 0 else len(self.frames) + index
-            self.setPixmap(scaled_frame(self.frames[self.index]))
         else:
             raise IndexError("Index out of range for frames.")
+        self.setPixmap(scaled_frame(self.frames[self.index]))
+
+    def play_keyframe(self):
+        """从元数据播放关键帧"""
+        assert self.metadata
+        try:
+            self.index += 1
+            next_frame = self.frames_map[self.metadata[str(self.index)]]
+            self.setPixmap(scaled_frame(next_frame))
+        except KeyError:
+            self.stop_loop()
 
     def rotate_frame(self, angle=0.5625):
         """旋转帧"""
