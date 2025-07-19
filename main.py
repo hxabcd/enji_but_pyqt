@@ -1,3 +1,4 @@
+import os
 import time
 from typing import List
 
@@ -239,7 +240,7 @@ def main():
     app.player.play()
 
     # DEBUG OPTIONS
-    start_from = 56000
+    start_from = 0
     stop_at = 0
     show_update = True
 
@@ -506,8 +507,52 @@ def main():
             app.text_centerline.widget.update_text("エッシャーの曖昧、自らを指す両手")
         elif 99500 <= pos < 101900:
             app.text_centerline.hide()
-        elif 101900 <= pos < 102400:
+        elif 101900 <= pos < 119300:
             app.window_img1.hide()
+        elif 119300 <= pos < 120300:
+            app.text_leftline.show()
+            app.text_leftline.widget.update_text("見えたか？")
+        elif 120300 <= pos < 121200:
+            app.text_leftline.widget.update_text("見えたか？<br>見えたか？")
+        elif 121200 <= pos < 124000:
+            app.text_leftline.widget.update_text(
+                "見えたか？<br>見えたか？<br>嘘なんかじゃない！"
+            )
+        elif 124000 <= pos < 125900:
+            app.text_leftline.hide()
+        elif 125900 <= pos < 126200:
+            app.text_leftline.show()
+            app.text_leftline.widget.update_text("たって")
+        elif 126200 <= pos < 128700:
+            app.text_leftline.widget.update_text("どんなにバカ")
+        elif 128700 <= pos < 129000:
+            app.text_leftline.widget.update_text("でも")
+        elif 129000 <= pos < 131500:
+            app.text_leftline.widget.update_text("自分を撃つの")
+        elif 131500 <= pos < 131900:
+            app.text_leftline.widget.update_text("もっと")
+        elif 131900 <= pos < 133800:
+            app.text_leftline.widget.update_text("紙の上に")
+        elif 133800 <= pos < 135000:
+            app.text_leftline.widget.update_text("臙脂が 必要")
+        elif 135000 <= pos < 135600:
+            app.text_leftline.hide()
+        elif 135600 <= pos < 137200:
+            os.system("type ASCII-1.txt")
+        elif 137200 <= pos < 140000:
+            app.text_leftline.show()
+            app.text_leftline.widget.update_text("巨大なパレットみたい")
+        elif 140000 <= pos < 140800:
+            app.text_leftline.hide()
+        elif 140800 <= pos < 142800:
+            app.text_leftline.show()
+            app.text_leftline.widget.update_text("心臓と血管")
+        elif 142800 <= pos < 143700:
+            app.text_leftline.widget.update_text("今日も")
+        elif 143700 <= pos < 145200:
+            app.text_leftline.widget.update_text("気づいてほしい")
+        elif 145200 <= pos < 146200:
+            app.text_leftline.widget.update_text("困ったな")
 
     app.player.positionChanged.connect(sequence_update)
 
