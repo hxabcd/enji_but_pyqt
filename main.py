@@ -95,6 +95,13 @@ class Animation(QApplication):
             title="神秘白色钻头",
         )
 
+        self.window_small_teto3 = ContainerWindow(
+            SequenceFrame("frames/small_teto3"),
+            position=("mid", "mid"),
+            size=(496, 480),
+            title="神秘白色钻头",
+        )
+
         self.text_left = ContainerWindow(
             DecoratedLabel(
                 text_size=200,
@@ -230,6 +237,13 @@ class Animation(QApplication):
             position=("mid", "mid"),
             size=(640, 640),
             title="看不出是什么的神必旋转物体",
+        )
+
+        self.teto1 = ContainerWindow(
+            SequenceFrame("frames/teto1"),
+            position=(970, 80),
+            size=(950, 1000),
+            title="TETO",
         )
 
 
@@ -507,15 +521,20 @@ def main():
             app.text_centerline.widget.update_text("エッシャーの曖昧、自らを指す両手")
         elif 99500 <= pos < 101900:
             app.text_centerline.hide()
-        elif 101900 <= pos < 119300:
+        elif 101900 <= pos < 110427:
             app.window_img1.hide()
+            app.window_small_teto3.show()
+            app.window_small_teto3.widget.start_loop(3)
+        elif 110427 <= pos < 119300:
+            app.window_small_teto3.hide()
+            ...
         elif 119300 <= pos < 120300:
             app.text_leftline.show()
-            app.text_leftline.widget.update_text("見えたか？")
+            app.text_left.widget.update_text("見えたか？<br><br>")
         elif 120300 <= pos < 121200:
-            app.text_leftline.widget.update_text("見えたか？<br>見えたか？")
+            app.text_left.widget.update_text("見えたか？<br>見えたか？")
         elif 121200 <= pos < 124000:
-            app.text_leftline.widget.update_text(
+            app.text_left.widget.update_text(
                 "見えたか？<br>見えたか？<br>嘘なんかじゃない！"
             )
         elif 124000 <= pos < 125900:
@@ -553,6 +572,13 @@ def main():
             app.text_leftline.widget.update_text("気づいてほしい")
         elif 145200 <= pos < 146200:
             app.text_leftline.widget.update_text("困ったな")
+
+        # TETO PART
+        if 23092 <= pos < 28600:
+            app.teto1.show()
+            app.teto1.widget.start_loop(1, "play_keyframe")
+        elif 28600 <= pos:
+            app.teto1.widget.hide()
 
     app.player.positionChanged.connect(sequence_update)
 
