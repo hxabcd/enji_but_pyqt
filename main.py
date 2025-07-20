@@ -120,7 +120,7 @@ class Animation(QApplication):
                     ),
                 ],
             ),
-            position=("gapL80", "mid"),
+            position=("gapL32", "mid"),
             size=(890, 960),
             shake=True,
         )
@@ -241,7 +241,7 @@ class Animation(QApplication):
 
         self.teto1 = ContainerWindow(
             SequenceFrame("frames/teto1"),
-            position=(970, 80),
+            position=("gapR32", "mid"),
             size=(950, 1000),
             title="TETO",
         )
