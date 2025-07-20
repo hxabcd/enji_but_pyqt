@@ -3,9 +3,9 @@ import os
 import random
 import re
 from dataclasses import dataclass, field
-from typing import List, Literal
+from typing import Callable, List, Literal
 
-from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtCore import QElapsedTimer, QObject, QPoint, Qt, QTimer
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -87,6 +87,71 @@ def process_position(position: tuple[int | str, int | str], size: tuple[int, int
     return pos
 
 
+class FrameController(QObject):
+    def __init__(self, fps: int = 30, parent=None):
+        super().__init__(parent)
+        self._fps = max(1, fps)
+        self._frame_duration = 1000.0 / self._fps
+        self._timer = QTimer(self)
+        self._timer.setTimerType(Qt.PreciseTimer)
+        self._elapsed = QElapsedTimer()
+        self._running = False
+        self._loop = True
+        self._callback = None
+        self._step = 1
+        self._current_step = 1  # 记录当前生效的步进值
+        self._timer.setInterval(1000 // 60)
+        self._timer.timeout.connect(self._on_tick)
+
+    def start(self, callback: Callable[[], None], step: int = 1, loop: bool = True):
+        step = max(1, step)
+
+        # 已在运行，返回
+        if self._running and step == self._current_step:
+            return
+
+        # step改变，更新
+        if self._running:
+            self._current_step = step
+            self._step = step
+            return
+
+        # 启动
+        self._callback = callback
+        self._step = step
+        self._current_step = step
+        self._loop = loop
+        self._elapsed.start()
+        self._timer.start()
+        self._running = True
+
+    def stop(self):
+        if not self._running:
+            return
+        self._timer.stop()
+        self._running = False
+        self._callback = None
+
+    def is_running(self) -> bool:
+        return self._running
+
+    def _on_tick(self):
+        if self._callback is None:
+            return
+
+        elapsed_ms = self._elapsed.elapsed()
+        expected_frame = int(elapsed_ms / self._frame_duration)
+
+        if not hasattr(self, "_last_frame"):
+            self._last_frame = 0
+
+        delta = expected_frame - self._last_frame
+        if delta >= self._step:
+            for _ in range(delta // self._step):
+                self._callback()
+            self._last_frame = expected_frame
+
+
 class SequenceFrame(QLabel):
     def __init__(self, res_name: str):
         """序列帧组件
@@ -124,6 +189,7 @@ class SequenceFrame(QLabel):
         self.current_loop_duration = None
         self.current_method = None
         self.loop_on_show = False
+        self.frame_controller = FrameController(fps=self.fps, parent=self)
 
     def start_loop(
         self,
@@ -131,23 +197,13 @@ class SequenceFrame(QLabel):
         method: Literal["play_frame", "play_keyframe", "rotate_frame"] = "play_frame",
     ):
         """循环播放帧"""
-        if not hasattr(self, "timer") or method != self.current_method:
-            self.timer = QTimer()
-            self.timer.timeout.connect(getattr(self, method))
-            if self.current_method == "rotate_frame":
-                self.reset_rotate()
-            self.current_method = method
-        if self.is_looping and duration != self.current_loop_duration:
-            self.stop_loop()
-        if not self.is_looping:
-            self.timer.start(1000 * duration // self.fps)
-            self.is_looping = True
-            self.current_loop_duration = duration
+        callback = getattr(self, method)
+        self.frame_controller.start(callback, step=duration, loop=True)
 
     def stop_loop(self):
         """停止循环帧"""
         if hasattr(self, "timer") and self.is_looping:
-            self.timer.stop()
+            self.frame_controller.stop()
             self.is_looping = False
 
     def play_frame(self, index: int | None = None):
@@ -197,16 +253,16 @@ class SequenceFrame(QLabel):
 
     # 隐藏时停止循环，显示时恢复循环
 
+    def showEvent(self, event: QShowEvent):
+        super().showEvent(event)
+        if self.loop_on_show:
+            self.start_loop(self.current_loop_duration, self.current_method)  # type: ignore
+
     def hideEvent(self, event: QHideEvent):
         super().hideEvent(event)
         if self.is_looping:
             self.loop_on_show = True
             self.stop_loop()
-
-    def showEvent(self, event: QShowEvent):
-        super().showEvent(event)
-        if self.loop_on_show:
-            self.start_loop(self.current_loop_duration, self.current_method)  # type: ignore
 
 
 class DecorationShape:
@@ -475,16 +531,16 @@ class ContainerWindow(QMainWindow):
 
     # 隐藏时停止循环，显示时恢复循环
 
+    def showEvent(self, event: QShowEvent) -> None:
+        super().showEvent(event)
+        if self.shake_on_show:
+            self.start_shake(self.current_offset, self.current_interval)  # type: ignore
+
     def hideEvent(self, event: QHideEvent) -> None:
         super().hideEvent(event)
         if self.is_shaking:
             self.shake_on_show = True
             self.stop_shake()
-
-    def showEvent(self, event: QShowEvent) -> None:
-        super().showEvent(event)
-        if self.shake_on_show:
-            self.start_shake(self.current_offset, self.current_interval)  # type: ignore
 
 
 class RopeWidget(QWidget):
