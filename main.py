@@ -254,7 +254,7 @@ def main():
 
     # 载入调试选项
     debug = os.getenv("DEBUG", "false").lower() == "true"
-    start_from = int(os.getenv("START_FROM", "0"))
+    start_from = int(os.getenv("START_FROM", "20000"))
     stop_at = int(os.getenv("STOP_AT", "0"))
     show_update = os.getenv("SHOW_UPDATE", "false").lower() == "true"
 
@@ -337,13 +337,13 @@ def main():
             app.text_left.widget.set_decorations(
                 [
                     Decoration(
-                        position=QPoint(300, 240),
+                        position=QPoint(300, 200),
                         shape=DecorationShape.RECTANGLE,
                         size=160,
                         rotation=45,
                     ),
                     Decoration(
-                        position=QPoint(300, 240),
+                        position=QPoint(300, 200),
                         shape=DecorationShape.RECTANGLE,
                         color=Color.BG_COLOR,
                         size=80,
@@ -362,6 +362,23 @@ def main():
         elif 28650 <= pos < 28927:
             app.text_left.hide()
         elif 28927 <= pos < 29327:  # なぜ なぜ　占い効かない
+            app.text_right.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(330, 240),
+                        shape=DecorationShape.CIRCLE,
+                        size=160,
+                        rotation=45,
+                    ),
+                    Decoration(
+                        position=QPoint(330, 240),
+                        shape=DecorationShape.CIRCLE,
+                        color=Color.BG_COLOR,
+                        size=80,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_right.show()
             app.text_right.widget.update_text(
                 "<span style='font-size:240px;'>な</span>ぜ<br><span style='font-size:240px;'>—</span>—"
@@ -376,6 +393,23 @@ def main():
             app.text_left.widget.update_text("")
             app.text_left.widget.set_decorations([])
         elif 30460 <= pos < 31126:
+            app.text_right.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(250, 450),
+                        shape=DecorationShape.RECTANGLE,
+                        size=160,
+                        rotation=45,
+                    ),
+                    Decoration(
+                        position=QPoint(250, 450),
+                        shape=DecorationShape.RECTANGLE,
+                        color=Color.BG_COLOR,
+                        size=80,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_right.widget.update_text(
                 "<span style='font-size:240px;'>占</span>い<br>"
             )
@@ -402,10 +436,30 @@ def main():
         elif 36993 <= pos < 39730:
             app.text_leftline.hide()
             app.text_rightline.hide()
+            app.text_rightline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(420, 55),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=135,
+                    ),
+                ]
+            )
             app.text_centerline.show()
             app.text_centerline.widget.update_text("何言ってんの？")
         elif 39730 <= pos < 41063:  # どうでもいいよ、普通の僕に関係ないでしょ？
             app.text_centerline.hide()
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(200, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.show()
             app.text_leftline.widget.update_text("どうでもいいよ")
         elif 41063 <= pos < 42531:
@@ -414,19 +468,51 @@ def main():
         elif 42531 <= pos < 44499:
             app.text_leftline.hide()
             app.text_rightline.hide()
+            app.text_centerline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(780, 80),
+                        shape=DecorationShape.CIRCLE,
+                        size=60,
+                    ),
+                ]
+            )
             app.text_centerline.show()
             app.text_centerline.widget.update_text("関係ないでしょ？")
         # 这里理应有个teto的入场动画
         elif 45898 <= pos < 46366:  # おい！そこの人間！
             app.text_centerline.hide()
+            app.text_left.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(200, 180),
+                        shape=DecorationShape.RECTANGLE,
+                        size=130,
+                        rotation=45,
+                    ),
+                ]
+            )
+            app.text_left.widget.set_alignment(Qt.AlignmentFlag.AlignLeft)
             app.text_left.show()
             app.text_left.widget.set_font_size(120)
             app.text_left.widget.update_text("おい！<br>")
         elif 46366 <= pos < 48399:
-            app.text_left.widget.update_text("おい！<br>そこの人間！<br>")
+            app.text_left.widget.update_text("おい！<br>そこの<br>人間！<br>")
         elif 48399 <= pos < 48766:
             app.text_left.widget.update_text("")
+            app.text_left.widget.set_decorations([])
         elif 48766 <= pos < 49233:  # 武器、持ってる？
+            app.text_left.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(200, 200),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
+
             app.text_left.widget.update_text("武器、<br>")
         elif 49233 <= pos < 51300:
             app.text_left.widget.update_text("武器、<br>持ってる？<br>")
@@ -445,19 +531,77 @@ def main():
         elif 56365 <= pos < 56933:
             app.text_left.hide()
         elif 56933 <= pos < 57265:
+            app.text_leftline.widget.set_decorations([])
             app.text_leftline.show()
             app.text_leftline.widget.update_text("だって")
         elif 57265 <= pos < 59732:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("どんなにバカ")
         elif 59732 <= pos < 60032:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("でも")
         elif 60032 <= pos < 62565:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("自分を撃つの")
         elif 62565 <= pos < 62900:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("もっと")
         elif 62900 <= pos < 64892:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("紙の上に")
         elif 64892 <= pos < 66000:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("臙脂が 必要")
         elif 66000 <= pos < 66090:
             app.text_leftline.hide()
@@ -482,6 +626,16 @@ def main():
         elif 66790 <= pos < 68000:
             app.window_emoji.hide()
         elif 68000 <= pos < 70770:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("巨大なパレットみたい")
             app.text_leftline.show()
         elif 70770 <= pos < 71630:
@@ -490,8 +644,27 @@ def main():
             app.text_leftline.widget.update_text("心臓と血管")
             app.text_leftline.show()
         elif 73690 <= pos < 74430:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("今日も")
         elif 74430 <= pos < 75960:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("気づいてほしい")
         elif 75960 <= pos < 77000:
             app.text_leftline.widget.update_text("困ったな")
@@ -541,24 +714,92 @@ def main():
             app.text_leftline.hide()
         elif 125900 <= pos < 126200:
             app.text_leftline.show()
+            app.text_leftline.widget.set_decorations([])
             app.text_leftline.widget.update_text("たって")
         elif 126200 <= pos < 128700:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("どんなにバカ")
         elif 128700 <= pos < 129000:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("でも")
         elif 129000 <= pos < 131500:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("自分を撃つの")
         elif 131500 <= pos < 131900:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("もっと")
         elif 131900 <= pos < 133800:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("紙の上に")
         elif 133800 <= pos < 135000:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("臙脂が 必要")
         elif 135000 <= pos < 135600:
             app.text_leftline.hide()
         elif 135600 <= pos < 137200:
             os.system("type ASCII-1.txt")
         elif 137200 <= pos < 140000:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.show()
             app.text_leftline.widget.update_text("巨大なパレットみたい")
         elif 140000 <= pos < 140800:
@@ -567,8 +808,27 @@ def main():
             app.text_leftline.show()
             app.text_leftline.widget.update_text("心臓と血管")
         elif 142800 <= pos < 143700:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.CIRCLE,
+                        size=100,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("今日も")
         elif 143700 <= pos < 145200:
+            app.text_leftline.widget.set_decorations(
+                [
+                    Decoration(
+                        position=QPoint(100, 50),
+                        shape=DecorationShape.TRIANGLE,
+                        size=100,
+                        rotation=45,
+                    ),
+                ]
+            )
             app.text_leftline.widget.update_text("気づいてほしい")
         elif 145200 <= pos < 146200:
             app.text_leftline.widget.update_text("困ったな")
