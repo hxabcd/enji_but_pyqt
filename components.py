@@ -202,9 +202,7 @@ class SequenceFrame(QLabel):
 
     def stop_loop(self):
         """停止循环帧"""
-        if hasattr(self, "timer") and self.is_looping:
-            self.frame_controller.stop()
-            self.is_looping = False
+        self.frame_controller.stop()
 
     def play_frame(self, index: int | None = None):
         """播放帧，可向前/向后，index 为空时切换下一帧"""
@@ -263,6 +261,14 @@ class SequenceFrame(QLabel):
         if self.is_looping:
             self.loop_on_show = True
             self.stop_loop()
+
+    def cleanup(self):
+        """清理资源"""
+        self.stop_loop()
+        self.frames.clear()
+        self.frames_map.clear()
+        if hasattr(self, "metadata"):
+            self.metadata.clear()
 
 
 class DecorationShape:
@@ -446,7 +452,7 @@ class DecoratedLabel(QWidget):
 class ContainerWindow(QMainWindow):
     def __init__(
         self,
-        widget: SequenceFrame | DecoratedLabel | QLabel,
+        widget: SequenceFrame | DecoratedLabel | QWidget,
         position: tuple[int | str, int | str],
         size: tuple[int, int] | None = None,
         title: str | None = None,
@@ -471,9 +477,10 @@ class ContainerWindow(QMainWindow):
         placeholder = QWidget()
         placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
         self.setCentralWidget(placeholder)
-        layout = QVBoxLayout(placeholder)
-        layout.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.widget, stretch=1)
+        self._layout = QVBoxLayout(placeholder)
+        self._layout.setAlignment(Qt.AlignCenter)
+        self._layout.addWidget(self.widget, stretch=1)
+        self.name = "default"
 
         if size is None:
             self.adjustSize()
@@ -490,6 +497,23 @@ class ContainerWindow(QMainWindow):
 
         if shake:
             self.start_shake()
+
+    def load_widget(self, widget: QWidget, name: str):
+        self.name = name
+        if self.widget != widget:
+            if self.widget is not None:
+                self._layout.removeWidget(self.widget)
+                self.widget.setParent(None)
+                if hasattr(self.widget, "cleanup"):
+                    self.widget.cleanup()
+                self.widget.deleteLater()
+            self._layout.addWidget(widget)
+            self.widget = widget
+            print(f"loaded {name}")
+
+    def unload_widget(self):
+        if self.name != "empty":
+            self.load_widget(QWidget(), "empty")
 
     def relocate(self):
         size = self.size().width(), self.size().height()
