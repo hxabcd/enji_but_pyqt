@@ -9,11 +9,9 @@
 
 原作者：[蛋包饭咖喱饭](https://www.bilibili.com/video/BV1ucGzzuEhw/)
 
-**注意**：程序启动时需要释放和载入资源文件，可能要耗费较长时间
+**注意**：程序启动时需要释放和载入资源文件，可能要耗费较长时间；程序峰值内存占用可能达到 860MB
 
-**注意**：程序峰值内存占用可能达到 860MB
-
-[下载](https://github.com/hxabcd/enji_but_pyqt/releases/download/latest/)
+支持的系统：Windows 10 及以上版本 | [下载](https://github.com/hxabcd/enji_but_pyqt/releases)
 
 ## 配置
 
