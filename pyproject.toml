@@ -1,10 +1,11 @@
 [project]
 name = "enji-but-pyqt"
 version = "0.1.0"
-description = "Add your description here"
+description = "一个使用PySide6仿照《胭脂》制作的动画程序"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pyinstaller>=6.14.2",
     "pyside6>=6.9.1",
     "win11toast>=0.35",
 ]

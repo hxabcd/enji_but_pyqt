@@ -2,6 +2,7 @@ import json
 import os
 import random
 import re
+import sys
 from dataclasses import dataclass, field
 from typing import Callable, List, Literal
 
@@ -57,6 +58,17 @@ def scaled_frame(frame: QPixmap):
         Qt.AspectRatioMode.KeepAspectRatio,
         Qt.TransformationMode.SmoothTransformation,
     )
+
+
+def get_res(relative_path):
+    """获取资源路径"""
+    if hasattr(sys, "_MEIPASS"):
+        base_path = sys._MEIPASS
+    elif getattr(sys, "frozen", False):
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
 
 
 class Color:
@@ -724,7 +736,7 @@ class HangingWindow(QMainWindow):
         self.setGeometry(704, 284, 512, 512)
         self.setWindowTitle("神秘木偶钻头")
 
-        self.widget = SequenceFrame("frames/doll_teto")
+        self.widget = SequenceFrame(get_res("frames/doll_teto"))
         self.rope = RopeWidget(self)
 
         placeholder = QWidget()

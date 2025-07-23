@@ -1,3 +1,5 @@
+"""视频封面"""
+
 from components import *
 from main import Animation
 
