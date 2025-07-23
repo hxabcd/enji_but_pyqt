@@ -13,6 +13,8 @@
 
 **注意**：程序峰值内存占用可能达到 860MB
 
+[下载](https://github.com/hxabcd/enji_but_pyqt/releases/download/latest/)
+
 ## 配置
 
 可通过配置环境变量来控制任务栏显示/隐藏和部分调试选项，具体见代码 `main.py` `main()`
