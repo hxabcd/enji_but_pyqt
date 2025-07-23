@@ -5,7 +5,16 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, List, Literal
 
-from PySide6.QtCore import QElapsedTimer, QObject, QPoint, Qt, QTimer
+from PySide6.QtCore import (
+    QEasingCurve,
+    QElapsedTimer,
+    QObject,
+    QPoint,
+    QPropertyAnimation,
+    QRect,
+    Qt,
+    QTimer,
+)
 from PySide6.QtGui import (
     QBrush,
     QColor,
@@ -37,7 +46,7 @@ def init_scale():
 
 def scaled(position: List[int] | tuple[int, int]):
     """缩放坐标，并减去标题栏高度"""
-    return int(position[0] * scale), int((position[1] - 32) * scale)
+    return int(position[0] * scale), int((position[1] - 16) * scale)
 
 
 def scaled_frame(frame: QPixmap):
@@ -166,10 +175,12 @@ class SequenceFrame(QLabel):
 
         # 初始化序列帧
         self.frames: List[QPixmap] = []
-        self.frames_map: dict[str, QPixmap] = {}
+        self.frames_index: dict[str, int] = {}
         self.index = 0
         self.fps = 30
 
+        # 载入帧
+        frame_count = 0
         frame_list = sorted(os.listdir(res_name))
         for frame in frame_list:
             if frame == "metadata.json":
@@ -179,10 +190,14 @@ class SequenceFrame(QLabel):
             path = os.path.join(res_name, frame)
             pixmap = QPixmap(path)
             self.frames.append(pixmap)
-            self.frames_map[frame] = pixmap
+            self.frames_index[frame] = frame_count
+            frame_count += 1
+
         if not self.frames:
             raise ValueError(f"No frames found in {res_name}")
         self.setPixmap(scaled_frame(self.frames[0]))
+
+        print(f"{res_name} is inited with {len(self.frames)} frames")
 
         # 初始化循环帧
         self.is_looping = False
@@ -208,6 +223,8 @@ class SequenceFrame(QLabel):
         """播放帧，可向前/向后，index 为空时切换下一帧"""
         if index is None:
             self.index = (self.index + 1) % len(self.frames)
+        elif index == self.index:
+            return
         elif abs(index) < len(self.frames):
             self.index = index if index > 0 else len(self.frames) + index
         else:
@@ -219,7 +236,7 @@ class SequenceFrame(QLabel):
         assert self.metadata
         try:
             self.index += 1
-            next_frame = self.frames_map[self.metadata[str(self.index)]]
+            next_frame = self.frames[self.frames_index[self.metadata[str(self.index)]]]
             self.setPixmap(scaled_frame(next_frame))
         except KeyError:
             self.stop_loop()
@@ -263,10 +280,10 @@ class SequenceFrame(QLabel):
             self.stop_loop()
 
     def cleanup(self):
-        """清理资源"""
+        """释放资源"""
         self.stop_loop()
         self.frames.clear()
-        self.frames_map.clear()
+        self.frames_index.clear()
         if hasattr(self, "metadata"):
             self.metadata.clear()
 
@@ -298,6 +315,7 @@ class DecoratedLabel(QWidget):
         text_font: QFont = QFont(),
         is_bold: bool = False,
         letter_spacing: str = "-16px",
+        line_height: str = "1.2em",
         text_color: QColor = Color.FG_COLOR,
         text_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignCenter,
         pixmap: QPixmap | None = None,
@@ -386,23 +404,40 @@ class DecoratedLabel(QWidget):
     def set_alignment(self, flag: Qt.AlignmentFlag):
         if self.label.alignment() != flag:
             self.label.setAlignment(flag)
-            self.label.setStyleSheet(f"""
-                color: {self.color.name()};
-                background-color: transparent;
-                letter-spacing: {self.letter_spacing};
-                text-align: {ALIGN_MAP[flag]};
-            """)
+            self.update_stylesheet()
 
-    def update_text(self, text: str, resize: bool | None = None):
-        if self.label.text() == text + " ":
+    def set_letter_spacing(self, letter_spacing: str):
+        """设置字间距"""
+        if self.letter_spacing != letter_spacing:
+            self.letter_spacing = letter_spacing
+            self.update_stylesheet()
+
+    def update_stylesheet(self):
+        """更新样式表"""
+        self.label.setStyleSheet(f"""
+            color: {self.color.name()};
+            background-color: transparent;
+            letter-spacing: {self.letter_spacing};
+            text-align: {ALIGN_MAP[self.label.alignment()]};
+        """)
+
+    def update_text(
+        self, text: str, resize: bool | None = None, fuck: tuple[int, int] | None = None
+    ):
+        if self.label.text() == text:
             return
-        self.label.setText(text + " ")
+        self.label.setText(text)
         if resize if resize is not None else self.auto_resize:
+            print(self.label.text())
             self.label.adjustSize()
             self.adjustSize()
             parent: ContainerWindow = self.parentWidget().parentWidget()  # type: ignore
-            parent.adjustSize()
-            parent.setFixedWidth(self.width() + 32)
+            if fuck:
+                # 操 我是真没招了 他妈的 adjustSize() 调出来一堆白的
+                parent.setFixedSize(*fuck)
+            else:
+                parent.adjustSize()
+            parent.setFixedWidth(self.size().width() + 32)
             parent.relocate()
 
     def update_jitter(self):
@@ -449,6 +484,21 @@ class DecoratedLabel(QWidget):
             painter.restore()
 
 
+class FloatLabel(QLabel):
+    def __init__(self, text: str):
+        super().__init__()
+
+        self.setText("56eB44GuMDcyMeOCkuimi+OBpg==")
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("color: #DEDBDE;")
+        self.setFont(QFont("Consolas", 28))
+        self.adjustSize()
+        self.move(
+            *scaled(process_position(("mid", 840), (self.width(), self.height())))
+        )
+
+
 class ContainerWindow(QMainWindow):
     def __init__(
         self,
@@ -458,14 +508,7 @@ class ContainerWindow(QMainWindow):
         title: str | None = None,
         shake: bool = False,
     ):
-        """基本容器窗口
-
-        Args:
-            widget (QWidget): 中心组件
-            position (tuple[int, int]): 窗口位置
-            size (tuple[int, int]): 窗口大小
-            title (str | None, optional): 窗口标题
-        """
+        """基本容器窗口"""
         super().__init__()
 
         self.position = position
@@ -480,7 +523,7 @@ class ContainerWindow(QMainWindow):
         self._layout = QVBoxLayout(placeholder)
         self._layout.setAlignment(Qt.AlignCenter)
         self._layout.addWidget(self.widget, stretch=1)
-        self.name = "default"
+        self.res_name = "default"
 
         if size is None:
             self.adjustSize()
@@ -498,27 +541,77 @@ class ContainerWindow(QMainWindow):
         if shake:
             self.start_shake()
 
-    def load_widget(self, widget: QWidget, name: str):
-        self.name = name
-        if self.widget != widget:
-            if self.widget is not None:
-                self._layout.removeWidget(self.widget)
-                self.widget.setParent(None)
-                if hasattr(self.widget, "cleanup"):
-                    self.widget.cleanup()
-                self.widget.deleteLater()
-            self._layout.addWidget(widget)
-            self.widget = widget
-            print(f"loaded {name}")
+        self._lefting = False
+
+    def preload_seqframe(self, name: str, constract: bool = True):
+        if self.res_name == name:
+            return
+        widget = SequenceFrame(name) if name != "empty" else QWidget()
+        if constract:
+            self.load_widget(widget, name)
+        else:
+            return widget
+
+    def load_widget(self, widget: SequenceFrame | QWidget, name: str):
+        """加载组件，释放旧组件内存"""
+        if self.widget is not None:
+            # 释放旧组件
+            self._layout.removeWidget(self.widget)
+            self.widget.setParent(None)
+            if hasattr(self.widget, "cleanup"):
+                self.widget.cleanup()
+            self.widget.deleteLater()
+        self._layout.addWidget(widget)
+        self.widget = widget
+        if name == "empty":
+            print(f"Unloaded {self.res_name}")
+        else:
+            print(f"Loaded {name} for {self.res_name}")
+        self.res_name = name
 
     def unload_widget(self):
-        if self.name != "empty":
-            self.load_widget(QWidget(), "empty")
+        """卸载组件"""
+        self.preload_seqframe("empty")
 
     def relocate(self):
-        size = self.size().width(), self.size().height()
+        size = self.width(), self.height()
         self.move(*scaled(process_position(self.position, size)))
         self._original_pos = self.pos()
+
+    def move_to(self, position: tuple[int | str, int | str] | None = None, force=False):
+        """移动窗口到指定位置"""
+        if position is None:
+            return
+        if position == self.position and not force:
+            return
+        self.position = position
+
+        size = self.width(), self.height()
+        new_pos = scaled(process_position(position, size))
+        if new_pos != self.pos():
+            self.relocate()
+
+    def smooth_move_to(
+        self,
+        target_pos: tuple[int | str, int | str],
+        duration: int = 200,
+        easing: QEasingCurve.Type = QEasingCurve.OutCubic,
+    ):
+        """平滑移动窗口"""
+        if (
+            hasattr(self, "_move_anim")
+            and self._move_anim.state() == QPropertyAnimation.Running
+        ):
+            return
+
+        self._move_anim = QPropertyAnimation(self, b"pos", self)
+        self._move_anim.setDuration(duration)
+        self._move_anim.setStartValue(self.pos())
+        self._move_anim.setEndValue(
+            QPoint(*scaled(process_position(target_pos, (self.width(), self.height()))))
+        )
+        self._move_anim.setEasingCurve(easing)
+        self._move_anim.start()
 
     def start_shake(self, offset=1, interval=33):
         """抖动窗口
@@ -535,6 +628,7 @@ class ContainerWindow(QMainWindow):
         ):
             self.stop_shake
         if not self.is_shaking:
+            self._original_pos = self.pos()
 
             def do_shake():
                 dx = random.randint(-offset, offset)
@@ -552,6 +646,35 @@ class ContainerWindow(QMainWindow):
         if hasattr(self, "shake_timer") and self.is_shaking:
             self.timer.stop()
             self.is_shaking = False
+
+    def fancy_left(self):
+        if self._lefting:
+            return
+
+        # 向右略微移动
+        anim1 = QPropertyAnimation(self, b"pos", self)
+        anim1.setDuration(300)
+        start_pos = self.pos()
+        end_pos = start_pos + QPoint(40, 0)
+        anim1.setStartValue(start_pos)
+        anim1.setEndValue(end_pos)
+        anim1.setEasingCurve(QEasingCurve.OutCubic)
+
+        # 向左冲出屏幕
+        anim2 = QPropertyAnimation(self, b"pos", self)
+        anim2.setDuration(300)
+        anim2.setStartValue(end_pos)
+        out_x = -self.width()
+        anim2.setEndValue(QPoint(out_x, start_pos.y()))
+        anim2.setEasingCurve(QEasingCurve.InCubic)
+
+        # 串行动画
+        def start_anim2():
+            anim2.start()
+
+        anim1.finished.connect(start_anim2)
+        anim1.start()
+        self._lefting = True
 
     # 隐藏时停止循环，显示时恢复循环
 
@@ -572,9 +695,8 @@ class RopeWidget(QWidget):
         super().__init__()
         self.target_window = target_window
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.showFullScreen()
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update)
@@ -603,6 +725,7 @@ class HangingWindow(QMainWindow):
         self.setWindowTitle("神秘木偶钻头")
 
         self.widget = SequenceFrame("frames/doll_teto")
+        self.rope = RopeWidget(self)
 
         placeholder = QWidget()
         placeholder.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
@@ -612,6 +735,14 @@ class HangingWindow(QMainWindow):
         layout.addWidget(self.widget, stretch=1)
 
         self._drag_pos = None
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.rope.showFullScreen()
+
+    def hideEvent(self, event) -> None:
+        super().hideEvent(event)
+        self.rope.hide()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -625,3 +756,81 @@ class HangingWindow(QMainWindow):
 
     def mouseReleaseEvent(self, event):
         self._drag_pos = None
+
+
+class ZoomImageWindow(QMainWindow):
+    def __init__(
+        self, image_path, rect_size, duration=4000, fade_duration=1000, out_time=2000
+    ):
+        super().__init__()
+        self.setWindowTitle("NERD TETO")
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+
+        self.out_time = out_time
+
+        self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setStyleSheet("background: transparent;")
+        self.image_label.setAttribute(Qt.WA_TranslucentBackground)
+        self.image_label.setScaledContents(True)
+
+        pixmap = QPixmap(image_path)
+        self.original_pixmap = pixmap
+        self.rect_size = rect_size
+        self.image_label.setPixmap(
+            pixmap.scaled(*rect_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # type: ignore
+        )
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.image_label)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.central_widget = QWidget(self)
+        self.central_widget.setLayout(layout)
+        self.setCentralWidget(self.central_widget)
+        self.resize(*rect_size)
+
+        # 缩放动画
+        self.zoom_anim = QPropertyAnimation(self.image_label, b"geometry", self)
+        self.zoom_anim.setDuration(duration)
+        self.zoom_anim.setStartValue(
+            QRect(
+                (self.width() - rect_size[0]) // 2 + rect_size[0] // 4,
+                (self.height() - rect_size[1]) // 2 + rect_size[1] // 4,
+                rect_size[0] // 2,
+                rect_size[1] // 2,
+            )
+        )
+        self.zoom_anim.setEndValue(
+            QRect(
+                (self.width() - rect_size[0]) // 2,
+                (self.height() - rect_size[1]) // 2,
+                rect_size[0],
+                rect_size[1],
+            )
+        )
+        self.zoom_anim.setEasingCurve(QEasingCurve.OutCubic)
+
+        # 淡入动画
+        self.fade_anim = QPropertyAnimation(self, b"windowOpacity", self)
+        self.fade_anim.setDuration(fade_duration)
+        self.fade_anim.setStartValue(0.0)
+        self.fade_anim.setEndValue(1.0)
+        self.fade_anim.setEasingCurve(QEasingCurve.OutQuad)
+
+        # 淡出动画
+        self.fade_out_anim = QPropertyAnimation(self, b"windowOpacity", self)
+        self.fade_out_anim.setDuration(fade_duration)
+        self.fade_out_anim.setStartValue(1.0)
+        self.fade_out_anim.setEndValue(0.0)
+        self.fade_out_anim.setEasingCurve(QEasingCurve.InQuad)
+
+    def fade_out(self):
+        self.fade_out_anim.start()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.image_label.setWindowOpacity(0.0)
+        self.zoom_anim.start()
+        self.fade_anim.start()
+        QTimer.singleShot(self.out_time, self.fade_out)

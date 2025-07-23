@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pyside6>=6.9.1",
+    "win11toast>=0.35",
 ]
 
 [[tool.uv.index]]
