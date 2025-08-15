@@ -27,6 +27,7 @@ from PySide6.QtGui import (
     QPolygon,
     QShowEvent,
     QTransform,
+    QScreen,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -42,7 +43,14 @@ def init_scale():
     """初始化缩放"""
     screen = QApplication.primaryScreen()
     global scale
-    scale = screen.logicalDotsPerInch() / 96
+    screen_size = screen.size()
+    # 计算基于1920x1080基准的缩放比例
+    width_scale = screen_size.width() / 1920
+    height_scale = screen_size.height() / 1080
+    # 使用较小的缩放比例保持比例
+    scale = min(width_scale, height_scale)
+    # 设置环境变量
+    os.environ["QT_SCALE_FACTOR"] = str(scale)
 
 
 def scaled(position: List[int] | tuple[int, int]):
@@ -92,21 +100,35 @@ def process_position(position: tuple[int | str, int | str], size: tuple[int, int
     窗口位置为mid时，会基于窗口大小被转换为屏幕中心位置
     窗口位置含gapLXX/gapRXX时，会自动转换为据屏幕边缘XX的位置
     """
+    # 获取屏幕尺寸
+    screen = QApplication.primaryScreen()
+    screen_size = screen.size() if screen else QSize(1920, 1080)
+    screen_width = screen_size.width()
+    screen_height = screen_size.height()
     pos = [0, 0]
     for i in range(2):
         if isinstance(position[i], int):
             pos[i] = position[i]  # type: ignore
         elif position[i] == "mid":
-            pos[i] = (RESOLUTION[i] - size[i]) // 2
+            # 垂直位置调整：使用屏幕高度的45%而不是50%来避免窗口偏下
+            if i == 1:  # y轴位置
+                pos[i] = int(screen_height * 0.45) - size[i] // 2
+            else:  # x轴位置
+                pos[i] = (screen_width - size[i]) // 2
         else:
             match = re.match(r"gap(L|R)(\d+)", position[i])  # type: ignore
             if side := match.group(1):
                 gap = int(match.group(2)) if match else 20
-                pos[i] = gap if side == "L" else RESOLUTION[i] - size[i] - gap
+                # 使用百分比计算位置
+                gap_value = int(screen_width * (gap / 1920))
+                # 垂直位置调整：使用屏幕高度的45%而不是50%来避免窗口偏下
+                if i == 1:  # y轴位置
+                    pos[i] = int(screen_height * 0.45) - size[i] // 2
+                else:  # x轴位置
+                    pos[i] = gap_value if side == "L" else screen_width - size[i] - gap_value
             else:
                 ValueError("Position argument is invalid.")
     return pos
-
 
 class FrameController(QObject):
     def __init__(self, fps: int = 30, parent=None):
@@ -500,15 +522,21 @@ class FloatLabel(QLabel):
     def __init__(self, text: str):
         super().__init__()
 
+     # 获取屏幕尺寸
+        screen = QApplication.primaryScreen()
+        screen_size = screen.size() if screen else QSize(1920, 1080)
+
         self.setText("56eB44GuMDcyMeOCkuimi+OBpg==")
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setStyleSheet("color: #DEDBDE;")
         self.setFont(QFont("Consolas", 28))
         self.adjustSize()
-        self.move(
-            *scaled(process_position(("mid", 840), (self.width(), self.height())))
-        )
+        
+        # 动态计算位置
+        x = (screen_size.width() - self.width()) // 2
+        y = int(screen_size.height() * 0.35)  # 35%高度位置
+        self.move(x,y)
 
 
 class ContainerWindow(QMainWindow):
@@ -733,6 +761,16 @@ class RopeWidget(QWidget):
 class HangingWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        # 获取屏幕尺寸
+        screen = QApplication.primaryScreen()
+        screen_size = screen.size() if screen else QSize(1920, 1080)
+
+         # 动态设置位置和大小
+        width = int(screen_size.width() * 0.27)  # 屏幕宽度的27%
+        height = int(screen_size.height() * 0.47)  # 屏幕高度的47%
+        x = (screen_size.width() - width) // 2
+        y = int(screen_size.height() * 0.15)  # 屏幕高度的15%
+
         self.setGeometry(704, 284, 512, 512)
         self.setWindowTitle("神秘木偶钻头")
 
@@ -775,6 +813,16 @@ class ZoomImageWindow(QMainWindow):
         self, image_path, rect_size, duration=4000, fade_duration=1000, out_time=2000
     ):
         super().__init__()
+
+        # 获取屏幕尺寸
+        screen = QApplication.primaryScreen()
+        screen_size = screen.size() if screen else QSize(1920, 1080)
+
+        rect_size = (
+            int(screen_size.width() * (rect_size[0] / 1920)),
+            int(screen_size.height() * (rect_size[1] / 1080))
+        )
+
         self.setWindowTitle("NERD TETO")
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
