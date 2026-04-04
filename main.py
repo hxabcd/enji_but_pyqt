@@ -7,7 +7,7 @@ from PySide6.QtCore import QPoint, Qt, QTimer, QUrl
 from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics, QIcon, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import QApplication, QWidget
-from win11toast import notify
+from windows11toast import ImagePlacement, notify
 
 from components import (
     Color,
@@ -823,7 +823,7 @@ def main():
                 notify(
                     title="布豪！",
                     body="这里理应有一段军火展示，但我们无法帮您打开代码编辑器，或许您可以尝试手动操作一下？（bushi",
-                    icon=get_res("resources/nerd_teto.jpg"),
+                    icon_src=get_res("resources/nerd_teto.jpg"),
                 )
                 app.flag = 0
         elif 88200 <= pos < 90200:
@@ -1086,10 +1086,8 @@ def main():
                 notify(
                     title="感谢观看！",
                     body="""本家：胭脂 - 蛋包饭咖喱饭\n程序设计制作：HxAbCd\n特别感谢 BSOD-MEMZ 提供的灵感与支持\n制作不易，不妨支持一下UP主？""",
-                    image={
-                        "src": get_res("resources/teto2.jpg"),
-                        "placement": "hero",
-                    },
+                    image_src=get_res("resources/teto2.jpg"),
+                    image_placement=ImagePlacement.HERO,
                     buttons=[
                         {
                             "activationType": "protocol",
@@ -1106,13 +1104,13 @@ def main():
                             "arguments": "https://space.bilibili.com/401002238",
                             "content": "UP的主页",
                         },
-                    ],
+                    ],  # type: ignore
                 )
                 app.flag = 0
 
     # 延时退出
     def status_update(status):
-        if status == QMediaPlayer.EndOfMedia:
+        if status == QMediaPlayer.MediaStatus.EndOfMedia:
             QTimer.singleShot(2000, app.quit)
 
     app.player.positionChanged.connect(sequence_update)

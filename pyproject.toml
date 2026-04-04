@@ -1,15 +1,19 @@
 [project]
 name = "enji-but-pyqt"
-version = "0.1.0"
+version = "0.1.1"
 description = "一个使用PySide6仿照《胭脂》制作的动画程序"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
-    "pyinstaller>=6.14.2",
-    "pyside6>=6.9.1",
-    "win11toast>=0.35",
+    "pyside6>=6.11.0",
+    "windows11toast>=1.2.6",
 ]
 
 [[tool.uv.index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]
