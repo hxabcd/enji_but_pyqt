@@ -1,7 +1,6 @@
 import ctypes
 import os
 import time
-from typing import List
 
 from PySide6.QtCore import QPoint, Qt, QTimer, QUrl
 from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics, QIcon, QPixmap
@@ -225,7 +224,7 @@ class Animation(QApplication):
         )
 
         window_ta_color = [Color.TETO_RED, Color.TETO_RED_DARK, Color.FG_COLOR]
-        self.ta: List[ContainerWindow] = []
+        self.ta: list[ContainerWindow] = []
         for i in range(3):
             window = ContainerWindow(
                 DecoratedLabel(

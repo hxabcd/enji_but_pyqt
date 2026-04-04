@@ -3,8 +3,9 @@ import os
 import random
 import re
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, List, Literal
+from typing import Literal
 
 from PySide6.QtCore import (
     QEasingCurve,
@@ -45,7 +46,7 @@ def init_scale():
     scale = screen.logicalDotsPerInch() / 96
 
 
-def scaled(position: List[int] | tuple[int, int]):
+def scaled(position: list[int] | tuple[int, int]):
     """缩放坐标，并减去标题栏高度"""
     return int(position[0] * scale), int((position[1] - 16) * scale)
 
@@ -186,7 +187,7 @@ class SequenceFrame(QLabel):
         self.setScaledContents(True)
 
         # 初始化序列帧
-        self.frames: List[QPixmap] = []
+        self.frames: list[QPixmap] = []
         self.frames_index: dict[str, int] = {}
         self.index = 0
         self.fps = 30
@@ -331,7 +332,7 @@ class DecoratedLabel(QWidget):
         text_color: QColor = Color.FG_COLOR,
         text_align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignCenter,
         pixmap: QPixmap | None = None,
-        decorations: List[Decoration] = [],
+        decorations: list[Decoration] = [],
         background_color: QColor = Color.BG_COLOR,
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
@@ -387,7 +388,7 @@ class DecoratedLabel(QWidget):
 
     def set_decorations(
         self,
-        decorations: List[Decoration],
+        decorations: list[Decoration],
         jitter_frequency: int = 1000,
         jitter_offset: int = 0,
     ):
@@ -557,7 +558,7 @@ class ContainerWindow(QMainWindow):
 
     def preload_seqframe(self, name: str, constract: bool = True):
         if self.res_name == name:
-            return
+            return None
         widget = SequenceFrame(name) if name != "empty" else QWidget()
         if constract:
             self.load_widget(widget, name)
