@@ -1,8 +1,6 @@
 import json
 import os
 import random
-import re
-import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
@@ -30,7 +28,6 @@ from PySide6.QtGui import (
     QTransform,
 )
 from PySide6.QtWidgets import (
-    QApplication,
     QLabel,
     QMainWindow,
     QSizePolicy,
@@ -38,75 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-
-def init_scale():
-    """初始化缩放"""
-    screen = QApplication.primaryScreen()
-    global scale
-    scale = screen.logicalDotsPerInch() / 96
-
-
-def scaled(position: list[int] | tuple[int, int]):
-    """缩放坐标，并减去标题栏高度"""
-    return int(position[0] * scale), int((position[1] - 16) * scale)
-
-
-def scaled_frame(frame: QPixmap):
-    """缩放帧"""
-    return frame.scaled(
-        int(frame.width() * scale),
-        int(frame.height() * scale),
-        Qt.AspectRatioMode.KeepAspectRatio,
-        Qt.TransformationMode.SmoothTransformation,
-    )
-
-
-def get_res(relative_path):
-    """获取资源路径"""
-    if hasattr(sys, "_MEIPASS"):
-        base_path = sys._MEIPASS
-    elif getattr(sys, "frozen", False):
-        base_path = os.path.dirname(sys.executable)
-    else:
-        base_path = os.path.dirname(__file__)
-    return os.path.join(base_path, relative_path)
-
-
-class Color:
-    TETO_RED = QColor("#FF7C7F")
-    TETO_RED_DARK = QColor("#D87678")
-    FG_COLOR = QColor("#474747")
-    BG_COLOR = QColor("#F2EFF2")
-
-
-ALIGN_MAP = {
-    Qt.AlignmentFlag.AlignLeft: "left",
-    Qt.AlignmentFlag.AlignCenter: "center",
-    Qt.AlignmentFlag.AlignRight: "right",
-}
-
-RESOLUTION = [1920, 1080]
-
-
-def process_position(position: tuple[int | str, int | str], size: tuple[int, int]):
-    """处理窗口位置
-    窗口位置为mid时，会基于窗口大小被转换为屏幕中心位置
-    窗口位置含gapLXX/gapRXX时，会自动转换为据屏幕边缘XX的位置
-    """
-    pos = [0, 0]
-    for i in range(2):
-        if isinstance(position[i], int):
-            pos[i] = position[i]  # type: ignore
-        elif position[i] == "mid":
-            pos[i] = (RESOLUTION[i] - size[i]) // 2
-        else:
-            match = re.match(r"gap(L|R)(\d+)", position[i])  # type: ignore
-            if side := match.group(1):
-                gap = int(match.group(2)) if match else 20
-                pos[i] = gap if side == "L" else RESOLUTION[i] - size[i] - gap
-            else:
-                ValueError("Position argument is invalid.")
-    return pos
+from utils import *
 
 
 class FrameController(QObject):
@@ -182,6 +111,7 @@ class SequenceFrame(QLabel):
             res_name (str): 序列帧资源目录，帧文件名应是数字
         """
         super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
 
         self.setStyleSheet(f"background-color: {Color.BG_COLOR.name()};")
         self.setScaledContents(True)
@@ -340,6 +270,7 @@ class DecoratedLabel(QWidget):
     ):
         """带有装饰几何图形的标签，几何图形可随机抖动"""
         super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -411,7 +342,7 @@ class DecoratedLabel(QWidget):
         self.update()
 
     def set_font_size(self, size: int):
-        self.text_font.setPointSize(size)
+        self.text_font.setPointSize(scaled_font_size(size))
         self.label.setFont(self.text_font)
 
     def set_alignment(self, flag: Qt.AlignmentFlag):
@@ -446,7 +377,7 @@ class DecoratedLabel(QWidget):
             self.adjustSize()
             parent: ContainerWindow = self.parentWidget().parentWidget()  # type: ignore
             if fuck:
-                # 操 我是真没招了 他妈的 adjustSize() 调出来一堆白的
+                # adjustSize() 调出来一堆白的...
                 parent.setFixedSize(*fuck)
             else:
                 parent.adjustSize()
@@ -500,16 +431,16 @@ class DecoratedLabel(QWidget):
 class FloatLabel(QLabel):
     def __init__(self, text: str):
         super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
 
-        self.setText("56eB44GuMDcyMeOCkuimi+OBpg==")
+        self.setText(text)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setStyleSheet("color: #DEDBDE;")
-        self.setFont(QFont("Consolas", 28))
+        self.setFont(QFont("Consolas", scaled_font_size(28)))
         self.adjustSize()
-        self.move(
-            *scaled(process_position(("mid", 840), (self.width(), self.height())))
-        )
+        base_size = to_base_size((self.width(), self.height()))
+        self.move(*scaled(process_position(("mid", "gapB240"), base_size)))
 
 
 class ContainerWindow(QMainWindow):
@@ -523,6 +454,7 @@ class ContainerWindow(QMainWindow):
     ):
         """基本容器窗口"""
         super().__init__()
+        self.setContentsMargins(0, 0, 0, 0)
 
         self.position = position
         if title:
@@ -537,13 +469,16 @@ class ContainerWindow(QMainWindow):
         self._layout.setAlignment(Qt.AlignCenter)
         self._layout.addWidget(self.widget, stretch=1)
         self.res_name = "default"
+        self._pending_client_target: QPoint | None = None
 
         if size is None:
             self.adjustSize()
             self.relocate()
         else:
-            self.resize(*scaled(size))
-            self.move(*scaled(process_position(position, size)))
+            self.resize(*scaled_size(size))
+            # 某些窗口会被子控件最小尺寸撑大，必须按“实际尺寸”重新定位，
+            # 否则在非16:9（如 1280x1024）下会出现视觉偏右/偏下。
+            self.relocate()  # NOTE: 但是看起来 AI 并没有完全修好……
 
         # 初始化晃动
         self.is_shaking = False
@@ -555,6 +490,25 @@ class ContainerWindow(QMainWindow):
             self.start_shake()
 
         self._lefting = False
+
+    def _frame_top_inset(self) -> int:
+        """返回窗口外框到客户区顶部的偏移（标题栏/上边框）。"""
+        return self.geometry().top() - self.frameGeometry().top()
+
+    def _move_to_client_target(self, target: QPoint) -> None:
+        """
+        将窗口位置移动到 target（Y 轴按客户区对齐）。
+        顶层窗口 move() 是以外框坐标为准，这里仅补偿垂直标题栏高度，
+        避免在部分平台把水平阴影/边框也计入后导致“略偏右”。
+        """
+        if self.isVisible():
+            self.move(target.x(), target.y() - self._frame_top_inset())
+            self._pending_client_target = None
+            return
+
+        # 未显示时 frame 信息可能还不稳定，先粗定位，showEvent 后再精确校正。
+        self.move(target)
+        self._pending_client_target = target
 
     def preload_seqframe(self, name: str, constract: bool = True):
         if self.res_name == name:
@@ -587,8 +541,9 @@ class ContainerWindow(QMainWindow):
         self.preload_seqframe("empty")
 
     def relocate(self):
-        size = self.width(), self.height()
-        self.move(*scaled(process_position(self.position, size)))
+        size = to_base_size((self.width(), self.height()))
+        target = QPoint(*scaled(process_position(self.position, size)))
+        self._move_to_client_target(target)
         self._original_pos = self.pos()
 
     def move_to(self, position: tuple[int | str, int | str] | None = None, force=False):
@@ -599,7 +554,7 @@ class ContainerWindow(QMainWindow):
             return
         self.position = position
 
-        size = self.width(), self.height()
+        size = to_base_size((self.width(), self.height()))
         new_pos = scaled(process_position(position, size))
         if new_pos != self.pos():
             self.relocate()
@@ -620,9 +575,14 @@ class ContainerWindow(QMainWindow):
         self._move_anim = QPropertyAnimation(self, b"pos", self)
         self._move_anim.setDuration(duration)
         self._move_anim.setStartValue(self.pos())
-        self._move_anim.setEndValue(
-            QPoint(*scaled(process_position(target_pos, (self.width(), self.height()))))
+        size = to_base_size((self.width(), self.height()))
+        target_client = QPoint(*scaled(process_position(target_pos, size)))
+        end_pos = (
+            QPoint(target_client.x(), target_client.y() - self._frame_top_inset())
+            if self.isVisible()
+            else target_client
         )
+        self._move_anim.setEndValue(end_pos)
         self._move_anim.setEasingCurve(easing)
         self._move_anim.start()
 
@@ -693,6 +653,13 @@ class ContainerWindow(QMainWindow):
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
+        if self._pending_client_target is not None:
+            self.move(
+                self._pending_client_target.x(),
+                self._pending_client_target.y() - self._frame_top_inset(),
+            )
+            self._pending_client_target = None
+            self._original_pos = self.pos()
         if self.shake_on_show:
             self.start_shake(self.current_offset, self.current_interval)  # type: ignore
 

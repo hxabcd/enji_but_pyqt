@@ -1,5 +1,6 @@
 import ctypes
 import os
+import re
 import time
 
 from PySide6.QtCore import QPoint, Qt, QTimer, QUrl
@@ -9,7 +10,6 @@ from PySide6.QtWidgets import QApplication, QWidget
 from windows11toast import ImagePlacement, notify
 
 from components import (
-    Color,
     ContainerWindow,
     DecoratedLabel,
     Decoration,
@@ -18,9 +18,17 @@ from components import (
     HangingWindow,
     SequenceFrame,
     ZoomImageWindow,
-    get_res,
-    init_scale,
 )
+from utils import Color, get_res, init_screen, scaled_font_size
+
+
+def scale_inline_font_size(text: str) -> str:
+    """将HTML内联样式里的 font-size:xxxpx 按当前分辨率缩放。"""
+    return re.sub(
+        r"(font-size\s*:\s*)(\d+)(px)",
+        lambda m: f"{m.group(1)}{scaled_font_size(int(m.group(2)))}{m.group(3)}",
+        text,
+    )
 
 
 class Animation(QApplication):
@@ -28,7 +36,8 @@ class Animation(QApplication):
         super().__init__()
         self.setApplicationName("胭脂")
         self.setWindowIcon(QIcon(get_res("resources/teto.ico")))
-        init_scale()
+
+        init_screen()
 
         # 初始化字体
         self.font_id1 = QFontDatabase.addApplicationFont(
@@ -157,7 +166,6 @@ class Animation(QApplication):
             shake=True,
         )
 
-        # ウェルカムつマイマイ　ようこそ　エントリしました　それでは行きましょう　ゲームスタートです
         afont = QFont("Arial")
         self.kaomoji = ContainerWindow(
             DecoratedLabel(
@@ -286,10 +294,8 @@ class Animation(QApplication):
 def main():
     app = Animation()
 
-    # 预加载
-    # 妈的，放在动画序列里预加载要阻塞一秒，真没招了
-    # 傻逼 PyQt 不能在子线程预加载
-    # 不管内存了 直接全局预载
+    # 预加载在动画序列里预加载要阻塞一秒，真没招了
+    # PyQt 不能在子线程预加载 直接全局预载
     teto4: SequenceFrame = app.teto.preload_seqframe(
         get_res("frames/teto4"), constract=False
     )  # type: ignore
@@ -313,11 +319,11 @@ def main():
 
         app.aboutToQuit.connect(show_taskbar)
 
-    # 性能计数器
     cnt = 0
     current_sec = time.localtime()
 
     def count():
+        """性能计数器"""
         nonlocal cnt, current_sec
         if time.localtime() != current_sec:
             current_sec = time.localtime()
@@ -325,8 +331,8 @@ def main():
             cnt = 0
         cnt += 1
 
-    # 动画序列
     def sequence_update(pos):
+        """动画序列"""
         if debug:
             if show_update:
                 count()
@@ -389,7 +395,9 @@ def main():
 
             app.text_left.show()
             app.text_left.widget.update_text(
-                "<span style='font-size:560px;'>え</span><span style='font-size:200px;'>？</span><br>——"
+                scale_inline_font_size(
+                    "<span style='font-size:560px;'>え</span><span style='font-size:200px;'>？</span><br>——"
+                )
             )
 
             app.teto.show()
@@ -398,7 +406,9 @@ def main():
 
         elif 24116 <= pos < 25360:
             app.text_left.widget.update_text(
-                "<span style='font-size:560px;'>え</span><span style='font-size:200px;'>？</span><br>うそ"
+                scale_inline_font_size(
+                    "<span style='font-size:560px;'>え</span><span style='font-size:200px;'>？</span><br>うそ"
+                )
             )
         elif 25360 <= pos < 25560:
             app.text_left.widget.update_text("")
@@ -408,7 +418,9 @@ def main():
             app.text_left.widget.set_alignment(Qt.AlignmentFlag.AlignLeft)
             app.text_left.widget.set_font_size(140)
             app.text_left.widget.update_text(
-                "<span style='font-size:320px;'>私</span> ——<br>————<br>————"
+                scale_inline_font_size(
+                    "<span style='font-size:320px;'>私</span> ——<br>————<br>————"
+                )
             )
             app.text_left.widget.set_decorations(
                 [
@@ -429,11 +441,15 @@ def main():
             )
         elif 26000 <= pos < 26700:
             app.text_left.widget.update_text(
-                "<span style='font-size:320px;'>私</span> 天才<br>————<br>————"
+                scale_inline_font_size(
+                    "<span style='font-size:320px;'>私</span> 天才<br>————<br>————"
+                )
             )
         elif 26700 <= pos < 28600:
             app.text_left.widget.update_text(
-                "<span style='font-size:320px;'>私</span> 天才<br>じゃない<br>—の？—"
+                scale_inline_font_size(
+                    "<span style='font-size:320px;'>私</span> 天才<br>じゃない<br>—の？—"
+                )
             )
         elif 28600 <= pos < 28800:
             app.text_left.hide()
@@ -460,13 +476,17 @@ def main():
             )
             app.text_right.show()
             app.text_right.widget.update_text(
-                "<span style='font-size:240px;'>な</span>ぜ—<br><span style='font-size:240px;'>—</span>—"
+                scale_inline_font_size(
+                    "<span style='font-size:240px;'>な</span>ぜ—<br><span style='font-size:240px;'>—</span>—"
+                )
             )
             app.text_right.widget.set_font_size(160)
             app.text_right.widget.set_alignment(Qt.AlignmentFlag.AlignCenter)
         elif 29327 <= pos < 30300:
             app.text_right.widget.update_text(
-                "<span style='font-size:240px;'>な</span>ぜ—<br>—<span style='font-size:240px;'>な</span>ぜ"
+                scale_inline_font_size(
+                    "<span style='font-size:240px;'>な</span>ぜ—<br>—<span style='font-size:240px;'>な</span>ぜ"
+                )
             )
         elif 30300 <= pos < 30460:
             app.text_left.widget.update_text("")
@@ -492,11 +512,15 @@ def main():
             )
             app.text_right.widget.set_font_size(160)
             app.text_right.widget.update_text(
-                "<span style='font-size:200px;'>占</span>い<br><span style='font-size:200px;'>—</span>———"
+                scale_inline_font_size(
+                    "<span style='font-size:200px;'>占</span>い<br><span style='font-size:200px;'>—</span>———"
+                )
             )
         elif 31126 <= pos < 32692:
             app.text_right.widget.update_text(
-                "<span style='font-size:200px;'>占</span>い<br><span style='font-size:200px;'>効</span>かない"
+                scale_inline_font_size(
+                    "<span style='font-size:200px;'>占</span>い<br><span style='font-size:200px;'>効</span>かない"
+                )
             )
         elif 32692 <= pos < 34000:
             app.text_right.hide()
