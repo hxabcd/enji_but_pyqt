@@ -1,11 +1,11 @@
 
 # Enji but PyQt | 胭脂，但是PyQt
 
-一个使用 `Python` + `PySide6`，仿照[胭脂](https://www.bilibili.com/video/BV1ucGzzuEhw/)的PV制作的 Windows 窗口动画程序。由 [BSOD-MEMZ](https://github.com/BSOD-MEMZ) 提供灵感，受到了 [《强 风 大 窗 口》](https://github.com/SunnyDesignor/PowerfulWindSlickedBackHairCS-LX_Improve) 的启发。
+一个使用 `Python` + `PySide6`，仿照[胭脂](https://www.bilibili.com/video/BV1ucGzzuEhw/)的MV制作的 Windows 窗口动画程序。由 [BSOD-MEMZ](https://github.com/BSOD-MEMZ) 提供灵感，受到了 [《强 风 大 窗 口》](https://github.com/SunnyDesignor/PowerfulWindSlickedBackHairCS-LX_Improve) 的启发。
 
 视频演示：https://www.bilibili.com/video/BV18R8wzEEgR
 
-原PV：https://www.bilibili.com/video/BV1ucGzzuEhw
+本家：https://www.bilibili.com/video/BV1ucGzzuEhw
 
 原作者：[蛋包饭咖喱饭](https://www.bilibili.com/video/BV1ucGzzuEhw/)
 
@@ -27,7 +27,7 @@
 
 > 更多创作细节，见博客文章[欸，我不是窗口吗？——胭脂，但是Windows](https://0xabcd.dev/posts/enji_but_pyqt/)
 
-* 与原PV相同的字体（我也好奇怎么找出来的）
+* 与原MV相同的字体（我也好奇怎么找出来的）
 
 * 基于时间的帧控制
 
